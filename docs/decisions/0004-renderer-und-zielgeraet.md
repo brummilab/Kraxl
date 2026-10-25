@@ -26,4 +26,8 @@ _Noch zu benennen:_ ein konkretes Einsteiger-Android der Mali-G52/Adreno-610-Kla
 | GPU | offen |
 | Android-Version | offen |
 
-**Fertig-Kriterium:** ≥ 30 fps stabil über 5 min Fahrbot-Runde, gemessen per Remote-Debugger.
+**Fertig-Kriterium:** ≥ 30 fps stabil über 5 min Fahrbot-Runde. Gemessen wird mit dem Knopf
+„Fahrbot 5 min“ in der Spike-Szene. Bewertet wird das 1%-Low (die langsamsten 1 % der Frames), nicht der
+Durchschnitt. Das Ergebnis steht am Bildschirm und im Log (`[Spike] …`, Remote-Debugger bzw. `adb logcat`).
+
+Gewählte Werte im Spike: 2 Boden-Texturen à 512², Auto-Shader, 1 Region 256 m × 256 m.

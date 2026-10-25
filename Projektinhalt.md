@@ -16,8 +16,8 @@ offene Welt (ca. 1×1 km) mit Hängen, Steinen, Matsch und Toren. Ohne Punkte, o
 
 | Nr. | Thema | Status |
 |---|---|---|
-| [0001](docs/decisions/0001-godot-version-pin.md) | Godot 4.7.2 pinnen, Terrain3D zuerst prüfen | vorläufig, Spike offen |
-| [0002](docs/decisions/0002-rad-controller.md) | Eigener Rad-Controller mit ShapeCast + Parkbremse | angenommen |
+| [0001](docs/decisions/0001-godot-version-pin.md) | Godot 4.7.2 + Terrain3D 1.0.2 pinnen | vorläufig, Hardware-Test offen |
+| [0002](docs/decisions/0002-rad-controller.md) | Eigener Rad-Controller mit ShapeCast + Parkbremse | angenommen, Prototyp besteht 14/14 |
 | [0003](docs/decisions/0003-steuerung-kleine-haende.md) | Halte-Tasten statt Joystick | angenommen |
 | [0004](docs/decisions/0004-renderer-und-zielgeraet.md) | Mobile-Renderer, schwaches Zielgerät | angenommen, Gerät offen |
 | [0005](docs/decisions/0005-kinderbeitraege.md) | Kinderbeiträge: Zeichnungen ja, Stimmen nein | angenommen |
@@ -26,22 +26,31 @@ offene Welt (ca. 1×1 km) mit Hängen, Steinen, Matsch und Toren. Ohne Punkte, o
 
 ## Fahrphysik-Ziele (Spike)
 
-- 30-cm-Stufe überwinden
-- 35°-Hang: Drift < 2 cm in 10 s im Stand
-- Winkelgeschwindigkeit im Stand < 0,01 rad/s (kein Zittern)
-- Rad-Einsinken in 15-cm-Spalt = 0
-- Aufstellen nach Umkippen < 3 s
-- Android-Zielgerät: ≥ 30 fps stabil über 5 min Fahrbot-Runde
+Messung vom 25.10.2026 (Details in ADR 0002):
+
+| Ziel | Gemessen | |
+|---|---|---|
+| 30-cm-Stufe überwinden | 1,8 s | ✅ |
+| 35°-Hang: Drift < 2 cm in 10 s (bergauf, quer, Terrain3D) | 0,0 mm | ✅ |
+| Winkelgeschwindigkeit im Stand < 0,01 rad/s | 0,0001 rad/s | ✅ |
+| Rad-Einsinken in 15-cm-Spalt | 14,8 mm (Plan: 0, geometrisch ≥ 7 mm) | ⚠️ PO-Entscheidung |
+| Aufstellen nach Umkippen < 3 s | 2,3 s | ✅ |
+| Android-Zielgerät: ≥ 30 fps über 5 min Fahrbot-Runde | – | offen (Spike-Tag) |
 
 ## Offene Aufgaben
 
-- [ ] Spike-Tag: Terrain3D auf Godot 4.7.2 (Windows + Android), Ergebnis in ADR 0001
+- [x] Spike-Tag vorbereiten: Spike-Szene, Fahrbot, Export-Presets, Ablaufplan (`docs/spike/spike-tag.md`)
+- [x] Terrain3D 1.0.2-stable pinnen (Skript mit SHA-256), Lizenztexte in `THIRD_PARTY_NOTICES.md`
+- [x] CI-Teil 1: Import + Fahrbot (`.github/workflows/fahrbot.yml`)
+- [ ] Spike-Tag durchführen: Windows + Android im Mobile-Renderer, Ergebnis in ADR 0001
+- [ ] Entscheidung: Grenze für Rad-Einsinken (2 cm statt 0, siehe ADR 0002)
 - [ ] Konkretes Einsteiger-Android-Zielgerät benennen (ADR 0004)
-- [ ] Terrain3D- und GUT-Version pinnen, Lizenztexte in `THIRD_PARTY_NOTICES.md` einfügen
-- [ ] CI-Workflow (Import → Tests → Export + Manifest-Gate) anlegen
+- [ ] GUT-Version pinnen
+- [ ] CI-Teil 2: Export Windows + Android und Manifest-Gate (`tools/check_apk_permissions.sh`)
 - [ ] Godot-MCP-Server auswählen und pinnen (M2)
 - [ ] Sub-Agent-Definitionen in `.claude/agents/` mit eingebetteten Regeln (M3)
-- [ ] `InputSource`-Abstraktion für Touch-UI und Fahrbot (M1)
+- [x] `InputSource`-Abstraktion für Touch-UI, Tastatur und Fahrbot (M1)
+- [ ] Touch-Steuerung ausbauen: Handballen-Erkennung am Rand, Lenkhilfe, Linkshänder-Modus, Ton-Feedback
 - [ ] Release-Keystore erzeugen, offline sichern, als CI-Secret hinterlegen
 - [ ] Zustimmung beider Elternteile für Kinderzeichnungen schriftlich einholen
 
@@ -50,3 +59,11 @@ offene Welt (ca. 1×1 km) mit Hängen, Steinen, Matsch und Toren. Ohne Punkte, o
 - **2026-10-25** – Repo angelegt. Priorisierte Verbesserungen (Stand Oktober 2026) als
   `docs/plan-verbesserungen-2026-10.md` übernommen und in ADRs 0001–0007, `CLAUDE.md`,
   `project.godot`, Physik-Konstanten, Lizenzdateien und Pre-commit-Hook umgesetzt.
+- **2026-10-25** – Spike-Tag vorbereitet:
+  - Terrain3D 1.0.2 gepinnt; es nennt jetzt Godot 4.4–4.7 als unterstützt.
+  - Rad-Controller-Prototyp, InputSource, Touch-Tasten, Terrain3D-Region per Code, Spike-Szene mit
+    5-min-FPS-Runde, Fahrbot mit 7 Szenarien und 14 Metriken (alle grün), CI-Workflow, Export-Presets,
+    APK-Berechtigungs-Gate.
+  - In der Cloud geprüft: Terrain3D lädt, Kollision mit Jolt funktioniert, Rendering im
+    Compatibility-Renderer läuft.
+  - Vulkan/Mobile ist nur auf echter Hardware prüfbar.

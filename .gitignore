@@ -22,3 +22,6 @@ recordings/
 # System
 .DS_Store
 Thumbs.db
+
+# Terrain3D wird per tools/fetch_terrain3d.(sh|ps1) gepinnt geladen
+addons/terrain_3d/

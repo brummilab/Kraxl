@@ -1,0 +1,52 @@
+name: Fahrbot
+
+# Physik-Regressionstest (ADR 0002/0007): Import, dann alle Fahrbot-Szenarien headless.
+# Export und Manifest-Gate folgen, sobald Keystore und Export-Templates eingerichtet sind.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fahrbot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GODOT_VERSION: 4.7.2-stable
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Godot laden
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/godot.zip" \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP"
+          echo "GODOT=$RUNNER_TEMP/Godot_v${GODOT_VERSION}_linux.x86_64" >> "$GITHUB_ENV"
+
+      - name: Terrain3D laden (gepinnt)
+        run: sh tools/fetch_terrain3d.sh
+
+      - name: Import
+        run: '"$GODOT" --headless --import --quit'
+
+      - name: Fahrbot
+        run: |
+          set -o pipefail
+          "$GODOT" --headless --fixed-fps 120 --quit-after 60000 \
+            res://tests/fahrbot/fahrbot.tscn -- --json=fahrbot.json | tee fahrbot.log
+          grep '^|' fahrbot.log >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Messwerte sichern
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fahrbot
+          path: |
+            fahrbot.json
+            fahrbot.log
+          if-no-files-found: ignore
