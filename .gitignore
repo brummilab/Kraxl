@@ -1,0 +1,24 @@
+# Godot
+.godot/
+.import/
+export/
+build/
+*.translation
+mono_crash.*.json
+
+# Keystores und Signierung – nie committen (ADR 0007)
+*.keystore
+*.jks
+*.p12
+export_credentials.cfg
+
+# Kinderstimmen bleiben lokal (ADR 0005)
+assets/kids_voice/
+
+# Fahrbot-Aufnahmen und lokale Review-Artefakte
+recordings/
+*.avi
+
+# System
+.DS_Store
+Thumbs.db

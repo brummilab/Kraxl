@@ -1,0 +1,34 @@
+#!/bin/sh
+# Schutz für Kinderbeiträge (ADR 0005).
+# - blockiert alles unter assets/kids_voice/
+# - prüft Bilder in assets/kids_drawings/ auf leere Metadaten (braucht exiftool)
+
+fail=0
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+
+for f in $staged; do
+	case "$f" in
+	assets/kids_voice/*)
+		echo "BLOCKIERT: $f – Kinderstimmen gehören nicht ins öffentliche Repo." >&2
+		fail=1
+		;;
+	assets/kids_drawings/*.png | assets/kids_drawings/*.jpg | assets/kids_drawings/*.jpeg | assets/kids_drawings/*.webp)
+		if ! command -v exiftool >/dev/null 2>&1; then
+			echo "BLOCKIERT: $f – exiftool fehlt, Metadaten können nicht geprüft werden." >&2
+			fail=1
+			continue
+		fi
+		# Alles außer rein technischen Feldern zählt als Metadatum.
+		meta=$(exiftool -s -s -s -EXIF:all -IPTC:all -XMP:all -PNG:TextualData "$f" 2>/dev/null)
+		if [ -n "$meta" ]; then
+			echo "BLOCKIERT: $f – enthält Metadaten. Bereinigen mit: exiftool -all= \"$f\"" >&2
+			fail=1
+		fi
+		;;
+	esac
+done
+
+if [ "$fail" -ne 0 ]; then
+	echo "Commit abgebrochen (siehe docs/decisions/0005-kinderbeitraege.md)." >&2
+	exit 1
+fi

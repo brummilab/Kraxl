@@ -1,0 +1,17 @@
+Kraxl – Asset-Lizenz
+
+Sofern in assets/SOURCES.md nicht anders angegeben, stehen alle eigenen Assets in diesem
+Ordner (Modelle, Texturen, Sounds, Musik) unter der
+
+  Creative Commons Attribution 4.0 International (CC BY 4.0)
+  https://creativecommons.org/licenses/by/4.0/legalcode
+
+Namensnennung: "Kraxl (brummilab)"
+
+Ausnahmen:
+- Kinderzeichnungen in assets/kids_drawings/ stehen bevorzugt unter CC0 1.0
+  (https://creativecommons.org/publicdomain/zero/1.0/legalcode) und werden nur per
+  Pseudonym genannt. Die jeweilige Lizenz steht in assets/SOURCES.md.
+- Fremd-Assets (nur CC0) sind mit Herkunfts-URL in assets/SOURCES.md aufgeführt.
+
+Code fällt nicht unter diese Datei, sondern unter ../LICENSE (MIT).

@@ -1,0 +1,30 @@
+; Engine configuration file.
+; Godot 4.7.2-stable (siehe .tool-versions, ADR 0001)
+
+config_version=5
+
+[application]
+
+config/name="Kraxl"
+config/description="Offline-Sandkasten-Fahrspiel für Kinder ab 4."
+config/features=PackedStringArray("4.7", "Mobile")
+
+[display]
+
+window/handheld/orientation=4
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+
+[physics]
+
+3d/physics_engine="Jolt Physics"
+common/physics_ticks_per_second=120
+common/physics_interpolation=true
+
+[rendering]
+
+renderer/rendering_method="mobile"
+renderer/rendering_method.mobile="mobile"
+textures/vram_compression/import_etc2_astc=true
