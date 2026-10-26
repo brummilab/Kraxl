@@ -24,6 +24,15 @@ Gelände:        Pfeiltasten/WASD; Schraubenschlüssel = zurück in die Garage.
                 Tastatur oder Gamepad wieder aus).
                 L = Licht an/aus (Extra "Licht"), E = Bagger-Arm / Schaufel senken.
 
+Bagger und Flieger
+------------------
+Bagger: Werkzeug halten (rechten Stick nach unten oder R3 drücken, Tastatur E), bis der Arm unten ist.
+  Leerer Löffel = graben (Erde im Löffel), Arm hoch, ein Stück fahren, wieder runter = auskippen.
+Flieger (Garage: Aufbau oder Vorlage mit dem Flugzeug):
+  vorwärts (A/B, R2, W, Pfeil hoch) = Gas, ab Tempo abheben und steigen
+  rückwärts (X/Y, L2, S, Pfeil runter) = sinken bzw. am Boden bremsen
+  lenken = Kurve. Ohne Eingabe fliegt er geradeaus weiter. Er kann nicht abstürzen.
+
 Zwei Spieler
 ------------
 Garage: Karte mit den Figuren antippen -> zwei Spieler. Die Helm-Karten (1 bzw. 2 Punkte) wählen,

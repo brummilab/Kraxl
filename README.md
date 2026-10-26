@@ -13,7 +13,7 @@ Kein Scheitern, keine Werbung, keine Käufe, kein Internet, keine Datenerfassung
 ## Status
 
 Spike-Stand (Oktober 2026):
-- **Crawler-Baukasten (Garage):** 10 Kategorien mit 53 Teilen und 8 fertigen Vorlagen, alles per Antippen
+- **Crawler-Baukasten (Garage):** 10 Kategorien mit 54 Teilen und 9 fertigen Vorlagen, alles per Antippen
   oder Gamepad, ohne Text. Darunter **Bagger** und **Radlader** mit beweglichem Arm bzw. Schaufel.
 - **3D-Modelle** aus dem Kenney Car Kit (CC0), in der Garage-Farbe lackiert (ADR 0011).
 - Licht an/aus, Auspuffrauch (mehr bei Gas), große Touch-Tasten nur auf Touch-Geräten, Entwickler-Anzeige mit F3.
@@ -21,6 +21,8 @@ Spike-Stand (Oktober 2026):
 - **Bunt:** 13 Lackfarben inkl. Regenbogen, farbige Felgen und Zierteile, Blumenwiese, Kegel und Kisten zum
   Umschubsen.
 - **Weltrand:** bunter Zaun; wer trotzdem hinausfällt, steht sofort wieder am Start.
+- **Bagger gräbt:** Arm runter = Mulde graben (Erde im Löffel), nochmal runter = Haufen auskippen (ADR 0013).
+- **Flieger:** eigener Aufbau, Spielzeug-Flug ohne Absturz (▲ Gas/steigen, ▼ sinken/bremsen, ◀ ▶ Kurve).
 - Fahrbares Gelände (Terrain3D) mit Touch-Steuerung, Gamepad (8BitDo SN30 Pro) und FPS-Messung.
 - Töne per Code: Motor je Motor-Teil, Ketten-Rattern, Hupe, Plumps, Dreiklang beim Aufstellen, Klicks (ADR 0010).
 - **Windows bestätigt:** läuft im Mobile-Renderer (RX 6600 XT, 59 fps), Controller über 8BitDo-Adapter erkannt.
@@ -63,11 +65,13 @@ src/
   input/                            InputSource-Abstraktion: Touch, Tastatur/Gamepad, Fahrbot
   vehicle/                          Rad-Controller, Bauplan → Fahrwerte, Optik, Auspuffrauch
   vehicle/kenney_models.gd          Kenney-Modelle ausrichten und lackieren
+  vehicle/kraxl_plane.gd            Flieger (Arcade-Flug ohne Absturz)
   vehicle/parts/part_catalog.gd     alle Teile und Vorlagen (mit vehicle_constants.gd einziger Ort für Physik-Werte)
   audio/                            Töne per Code (sfx.gd) und Fahrzeuggeräusche (vehicle_audio.gd)
   world/spike_terrain.gd            Terrain3D-Region per Code (35°-Hang, Wiese, Hügel)
   world/world_border.gd             bunter Zaun + unsichtbare Wand am Geländerand
   world/playground.gd               Blumen, Kegel und Kisten
+  world/digging.gd                  Bagger gräbt Mulden und kippt Haufen ins Terrain3D
   spike/terrain_spike.gd            Spike-Szene inkl. 5-min-Fahrbot-Runde
 tests/fahrbot/                      Physik-Szenarien + Baukasten-Matrix (headless, CI)
 tests/ui/                           Garage, Bauplan, Gamepad-Belegung (headless, CI)
@@ -119,7 +123,9 @@ Dann das Projekt mit Godot 4.7.2-stable öffnen. **F5** startet die **Garage**:
 | Lenken | Steuerkreuz oder linker Stick |
 | Hupe | linken Stick drücken (L3), Tastatur H oder Leertaste, Touch-Taste mit Trichter |
 | Licht an/aus | Start (im Gelände), Tastatur L, Touch-Taste mit Lampe |
-| Werkzeug (Bagger, Radlader) | rechten Stick nach unten oder R3, Tastatur E, Touch-Taste mit Schaufel |
+| Werkzeug (Bagger, Radlader) | rechten Stick nach unten halten oder R3 drücken, Tastatur E, Touch-Taste mit Schaufel |
+| Bagger graben / auskippen | Werkzeug halten, bis der Arm unten ist: leerer Löffel gräbt, voller kippt aus |
+| Flieger | vorwärts = Gas/steigen, rückwärts = sinken/bremsen, lenken = Kurve |
 | Garage / Losfahren | Select / Start |
 
 **Zwei Spieler** (Figuren-Karte in der Garage): Das erste Gamepad steuert Spieler 1 (links), das zweite
@@ -136,7 +142,7 @@ Für unbekannte Geräte gibt es `data/gamecontrollerdb_extra.txt`.
 ## Fahrbot (Physik-Tests)
 
 Der Fahrbot ist ein automatischer Testfahrer. Er fährt jeden möglichen Bauplan aus der Garage über
-Prüfstrecken (35°-Hang, 30-cm-Stufe, Spalt, Umkippen, Weltrand) und misst, ob ein Crawler rutscht, wackelt
+Prüfstrecken (35°-Hang, 30-cm-Stufe, Spalt, Umkippen, Weltrand, Graben, Fliegen) und misst, ob ein Crawler rutscht, wackelt
 oder liegen bleibt. So kann kein Kind einen Crawler bauen, der „scheitert“. Er läuft bei jedem Push in der CI,
 nicht im Spiel. Im Spiel steckt nur die 5-Minuten-Bildratenmessung („Fahrbot 5 min“), versteckt hinter F3.
 

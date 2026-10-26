@@ -41,6 +41,7 @@ func _ready() -> void:
 	effects.max_polyphony = 3
 	vehicle.landed.connect(_on_landed)
 	vehicle.righted.connect(_on_righted)
+	vehicle.bucket_changed.connect(_on_bucket_changed)
 
 
 func _physics_process(delta: float) -> void:
@@ -69,6 +70,11 @@ func honk() -> void:
 
 func _on_landed(strength: float) -> void:
 	_play_effect(Sfx.thud(), lerpf(-14.0, 0.0, strength), randf_range(0.9, 1.1))
+
+
+## Graben: tiefer Plumps; Auskippen: höherer, „rieselnder“ Plumps.
+func _on_bucket_changed(full: bool) -> void:
+	_play_effect(Sfx.thud(), -4.0, 0.7 if full else 1.3)
 
 
 func _on_righted() -> void:

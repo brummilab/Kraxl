@@ -33,6 +33,9 @@ auf dem Android-Zielgerät (ADR 0004) im Modus „Kleine Hände“.
 | 24 | Farben: Regenbogen-Lack, neue Farben, bunte Welt gefallen; nichts zu grell | ☐ | |
 | 25 | Weltrand: Zaun hält auf, nie ins Leere gefallen | ☐ | |
 | 26 | Kraxl-Update.cmd: holt neue Version, Crawler bleiben gespeichert | ☐ | |
+| 27 | Bagger: Kind versteht „Arm runter = graben, nochmal runter = auskippen“; Mulde/Haufen gut sichtbar | ☐ | |
+| 28 | Bagger fährt in die eigene Mulde und wieder heraus | ☐ | |
+| 29 | Flieger: abheben, Kurven, landen ohne Erklärung verständlich; Tempo angenehm | ☐ | |
 
 **Gesamturteil:** ☐ Fühlt sich gut an – Merge freigegeben  ☐ Nachbessern
 

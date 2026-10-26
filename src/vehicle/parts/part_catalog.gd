@@ -71,6 +71,8 @@ const PARTS := {
 		# Mit Werkzeug-Taste: Bagger-Arm bzw. Schaufel heben und senken (nur Optik).
 		{"id": &"bagger", "masse": 70.0, "kabine": Vector3(1.25, 0.9, 1.3), "kabine_z": 0.3, "schwerpunkt": 0.1},
 		{"id": &"radlader", "masse": 55.0, "kabine": Vector3(1.1, 0.9, 0.9), "kabine_z": 0.3, "schwerpunkt": 0.07},
+		# Kein Crawler: im Gelände fliegt ein KraxlPlane (ADR 0013). Räder, Federung usw. zählen dann nicht.
+		{"id": &"flieger", "masse": 0.0, "kabine": Vector3(1.2, 0.6, 1.0), "kabine_z": 0.0, "schwerpunkt": 0.0, "flieger": true},
 	],
 	&"farbe": [
 		{"id": &"orange", "farbe": Color(1.0, 0.5, 0.05)},
@@ -118,7 +120,10 @@ const PRESETS := [
 		"farbe": &"gelb", "extras": [&"licht"]},
 	{"id": &"radlader", "fahrgestell": &"mittel", "raeder": &"gross", "reifen": &"matsch", "aufbau": &"radlader",
 		"lenkung": &"allrad", "farbe": &"gelb", "extras": [&"licht"]},
+	{"id": &"flieger", "aufbau": &"flieger", "farbe": &"rot"},
 ]
+## Kategorien, die beim Flieger etwas bewirken (die Garage blendet die übrigen aus).
+const PLANE_CATEGORIES: Array[StringName] = [&"aufbau", &"farbe"]
 
 
 static func parts(category: StringName) -> Array:

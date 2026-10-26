@@ -16,9 +16,9 @@
   - Jede Berührung gibt Ton und Hüpfer (M5).
   - Alle Teile einer Kategorie passen in eine Reihe, Wischen ist nicht nötig.
 - **Teile als Daten** in `src/vehicle/parts/part_catalog.gd`:
-  - 10 Kategorien und 8 Vorlagen, insgesamt 53 Teile.
-  - Fahrgestell 5, Räder 4, Achsen 2, Reifen 4, Federung 4, Motor 3, Lenkung 3, Aufbau 9 (inkl. Bagger und
-    Radlader, ADR 0011), Farbe 13 (inkl. Regenbogen, ADR 0012), Extras 6
+  - 10 Kategorien und 9 Vorlagen, insgesamt 54 Teile.
+  - Fahrgestell 5, Räder 4, Achsen 2, Reifen 4, Federung 4, Motor 3, Lenkung 3, Aufbau 10 (inkl. Bagger und
+    Radlader, ADR 0011, und Flieger, ADR 0013), Farbe 13 (inkl. Regenbogen, ADR 0012), Extras 6
     (mehrfach wählbar).
   - Physik-Werte stehen nur hier und in `vehicle_constants.gd`.
 - **Bauplan → Fahrwerte:** `CrawlerDesign` (gewählte Teile) → `VehicleSpec` (berechnete Werte) → `KraxlVehicle`.

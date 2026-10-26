@@ -272,6 +272,9 @@ static func _rotated_rect(ci: CanvasItem, center: Vector2, size: Vector2, angle:
 
 
 static func _body_silhouette(ci: CanvasItem, id: StringName, c: Vector2, u: float, accent: Color) -> void:
+	if id == &"flieger":
+		_plane(ci, c, u, accent)
+		return
 	var base_y := c.y + 14 * u
 	var wheel_r := 12 * u
 	var rear := c.x + 26 * u
@@ -351,6 +354,25 @@ static func _body_silhouette(ci: CanvasItem, id: StringName, c: Vector2, u: floa
 	for x in [front, rear]:
 		ci.draw_circle(Vector2(x, base_y), wheel_r, TIRE)
 		ci.draw_circle(Vector2(x, base_y), wheel_r * 0.45, accent.darkened(0.2))
+
+
+## Flieger von der Seite: Rumpf, Flügel, Leitwerk, Propeller, kleines Fahrwerk (Form statt Text).
+static func _plane(ci: CanvasItem, c: Vector2, u: float, accent: Color) -> void:
+	var y := c.y - 2 * u
+	ci.draw_line(Vector2(c.x - 18 * u, y + 14 * u), Vector2(c.x - 18 * u, y + 24 * u), INK, 3 * u)
+	ci.draw_circle(Vector2(c.x - 18 * u, y + 26 * u), 5 * u, TIRE)
+	ci.draw_circle(Vector2(c.x + 34 * u, y + 12 * u), 3 * u, TIRE)
+	ci.draw_colored_polygon(PackedVector2Array([  # Rumpf
+		Vector2(c.x - 40 * u, y - 6 * u), Vector2(c.x + 30 * u, y - 4 * u), Vector2(c.x + 44 * u, y - 10 * u),
+		Vector2(c.x + 44 * u, y + 2 * u), Vector2(c.x + 30 * u, y + 10 * u), Vector2(c.x - 40 * u, y + 10 * u),
+	]), accent)
+	ci.draw_colored_polygon(PackedVector2Array([  # Seitenleitwerk
+		Vector2(c.x + 30 * u, y - 4 * u), Vector2(c.x + 40 * u, y - 28 * u), Vector2(c.x + 48 * u, y - 28 * u), Vector2(c.x + 44 * u, y - 6 * u),
+	]), accent.darkened(0.25))
+	ci.draw_rect(Rect2(c.x - 24 * u, y + 2 * u, 34 * u, 6 * u), accent.darkened(0.35))  # Tragfläche
+	ci.draw_circle(Vector2(c.x - 18 * u, y - 8 * u), 7 * u, Color(0.6, 0.8, 0.95))  # Kanzel
+	ci.draw_rect(Rect2(c.x - 46 * u, y - 18 * u, 4 * u, 34 * u), INK)  # Propeller
+	ci.draw_circle(Vector2(c.x - 42 * u, y + 2 * u), 4 * u, Color.WHITE)
 
 
 static func _extra(ci: CanvasItem, id: StringName, c: Vector2, u: float, accent: Color) -> void:

@@ -18,6 +18,8 @@ const SCENARIOS := [
 	"aufstellen",
 	"terrain3d_hang_quer",
 	"terrain3d_rand",
+	"terrain3d_graben",
+	"flieger",
 	"baukasten",
 ]
 const SPAWN_CLEARANCE := 0.85  # Karosserie-Ursprung über dem Boden beim Absetzen
@@ -192,6 +194,105 @@ func _scenario_terrain3d_rand() -> void:
 	_report("terrain3d_rand", "aus der Welt gefallen", m.lost, 0.0, "")
 
 
+## Bagger gräbt eine Mulde, fährt zurück, kippt einen Haufen aus und fährt dann durch die Mulde.
+## Pflicht: Boden ändert sich sichtbar, der Bagger bleibt aufrecht und in der Welt (ADR 0013).
+func _scenario_terrain3d_graben() -> void:
+	if not ClassDB.class_exists("Terrain3D"):
+		_report("terrain3d_graben", "Terrain3D geladen", 1.0, 0.0, "")
+		return
+	var camera := Camera3D.new()
+	_stage.add_child(camera)
+	var terrain := SpikeTerrain.create(_stage, camera)
+	var digging := Digging.new(terrain)
+	_stage.add_child(digging)
+	await _run(0.2)
+	var design := CrawlerDesign.new()
+	design.choices[&"aufbau"] = &"bagger"
+	design.choices[&"reifen"] = &"ketten"
+	var start := Vector3(128, SpikeTerrain.height_at(128, 110) + SPAWN_CLEARANCE, 110)
+	var vehicle := _spawn(Transform3D(Basis(), start), design)
+	digging.vehicles.append(vehicle)
+	await _run(2.0)
+	var bot := BotInputSource.new()
+	vehicle.input = bot
+	vehicle.input.tool = 1.0
+	await _run(1.5)
+	var hole := vehicle.tool_tip()
+	var dug := SpikeTerrain.height_at(hole.x, hole.z) - terrain.data.get_height(Vector3(round(hole.x), 0, round(hole.z)))
+	var full := 1.0 if vehicle.bucket_full else 0.0
+	vehicle.input.tool = 0.0
+	await _run(1.5)
+	vehicle.input = BotInputSource.new([{"duration": 1.5, "throttle": -0.8, "steer": 0.0}])
+	await _run(3.0)
+	vehicle.input.tool = 1.0
+	await _run(1.5)
+	var pile := vehicle.tool_tip()
+	var heaped := terrain.data.get_height(Vector3(round(pile.x), 0, round(pile.z))) - SpikeTerrain.height_at(pile.x, pile.z)
+	var emptied := 1.0 if not vehicle.bucket_full else 0.0
+	vehicle.input = BotInputSource.new([{"duration": 6.0, "throttle": 0.8, "steer": 0.0}])
+	var m := {"min_up": 1.0, "lost": 0.0}
+	await _run(7.0, func():
+		m.min_up = minf(m.min_up, vehicle.global_basis.y.dot(Vector3.UP))
+		if WorldBorder.is_lost(vehicle.global_position):
+			m.lost = 1.0)
+	print("  Mulde %.2f m, Haufen %.2f m, Löffel %d/%d" % [dug, heaped, digging.scoops, digging.dumps])
+	_report("terrain3d_graben", "Mulde unter dem Löffel", dug, 0.25, "m", true)
+	_report("terrain3d_graben", "Löffel nach dem Graben voll", full, 1.0, "", true)
+	_report("terrain3d_graben", "Haufen nach dem Auskippen", heaped, 0.2, "m", true)
+	_report("terrain3d_graben", "Löffel nach dem Auskippen leer", emptied, 1.0, "", true)
+	_report("terrain3d_graben", "Aufrecht beim Durchfahren (Hochachse)", m.min_up, C.UPRIGHT_DOT_LIMIT, "", true)
+	_report("terrain3d_graben", "aus der Welt gefallen", m.lost, 0.0, "")
+
+
+## Flieger (ADR 0013): abheben, Höhe halten, Kurve, Höchstgrenze, landen und stehen bleiben.
+## Er kreist dabei leicht, damit er über der 800-m-Fläche bleibt.
+func _scenario_flieger() -> void:
+	_box(Vector3(800, 1, 800), Vector3(0, -0.5, 0))
+	var design := CrawlerDesign.new()
+	design.choices[&"aufbau"] = &"flieger"
+	var plane := KraxlPlane.new()
+	plane.sounds = false
+	plane.design = design
+	_stage.add_child(plane)
+	_camera = Camera3D.new()
+	_camera.position = Vector3(20, 15, 30)
+	_stage.add_child(_camera)
+	await _run(0.5)
+	var phases := [6.0, 4.0, 4.0, 15.0, 16.0, 6.0]  # abheben, Höhe halten, Kurve, ganz hoch, sinken, ausrollen
+	plane.input = BotInputSource.new([
+		{"duration": phases[0], "throttle": 1.0, "steer": 0.3},
+		{"duration": phases[1], "throttle": 0.0, "steer": 0.3},
+		{"duration": phases[2], "throttle": 0.0, "steer": 1.0},
+		{"duration": phases[3], "throttle": 1.0, "steer": 0.3},
+		{"duration": phases[4], "throttle": -1.0, "steer": 0.3},
+		{"duration": phases[5], "throttle": 0.0, "steer": 0.0},
+	])
+	var m := {"t": 0.0, "takeoff": 0.0, "level_start": 0.0, "level_end": 0.0, "yaw_start": 0.0, "yaw": 0.0,
+		"max_alt": 0.0, "min_y": INF}
+	var dt := 1.0 / C.PHYSICS_TICKS_PER_SECOND
+	await _run(phases.reduce(func(a, b): return a + b, 0.0), func():
+		m.t += dt
+		var y := plane.global_position.y
+		m.min_y = minf(m.min_y, y)
+		m.max_alt = maxf(m.max_alt, y)
+		if m.t <= phases[0]:
+			m.takeoff = maxf(m.takeoff, y)
+		var t1: float = phases[0] + 1.0  # 1 s Übergang zum Geradeausflug
+		if absf(m.t - t1) < dt * 0.5:
+			m.level_start = y
+		if absf(m.t - (phases[0] + phases[1])) < dt * 0.5:
+			m.level_end = y
+			m.yaw_start = plane.rotation.y
+		if absf(m.t - (phases[0] + phases[1] + phases[2])) < dt * 0.5:
+			m.yaw = absf(angle_difference(m.yaw_start, plane.rotation.y)))
+	_report("flieger", "Abheben: Höhe nach 6 s Gas", m.takeoff, 3.0, "m", true)
+	_report("flieger", "Höhe halten ohne Eingabe (Änderung in 3 s)", absf(m.level_end - m.level_start), 0.5, "m")
+	_report("flieger", "Kurve in 4 s", rad_to_deg(m.yaw), 60.0, "°", true)
+	_report("flieger", "Höchste Höhe", m.max_alt, C.PLANE_MAX_ALTITUDE + 2.0, "m")
+	_report("flieger", "Nie unter dem Boden (tiefster Punkt)", m.min_y, -0.05, "m", true)
+	_report("flieger", "Gelandet und steht", 1.0 if not plane.flying and absf(plane.speed) < 0.5 and plane.is_on_floor() else 0.0, 1.0, "", true)
+
+
 ## Pflicht für JEDE Teilekombination (ADR 0008): am 35°-Hang quer und bergauf parken ohne Drift
 ## und Zittern, nach dem Umkippen in < 3 s wieder aufrecht. Die 30-cm-Stufe ist dagegen eine
 ## Eigenschaft (kleine Räder schaffen sie nicht) und wird nur gezählt.
@@ -241,10 +342,14 @@ func _baukasten_designs() -> Array:
 				out.append(["%s/%s/%s" % [chassis.id, wheels.id, suspension.id], d])
 	for category in [&"achsen", &"reifen", &"motor", &"lenkung", &"aufbau"]:
 		for p in PartCatalog.parts(category):
+			if p.get("flieger", false):
+				continue  # kein Crawler, eigenes Szenario „flieger“
 			var d := CrawlerDesign.new()
 			d.choices[category] = p.id
 			out.append(["%s=%s" % [category, p.id], d])
 	for preset in PartCatalog.PRESETS:
+		if CrawlerDesign.from_preset(preset).is_plane():
+			continue
 		out.append(["vorlage=%s" % preset.id, CrawlerDesign.from_preset(preset)])
 	return out
 

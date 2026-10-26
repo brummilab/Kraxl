@@ -23,11 +23,12 @@ offene Welt (ca. 1×1 km) mit Hängen, Steinen, Matsch und Toren. Ohne Punkte, o
 | [0005](docs/decisions/0005-kinderbeitraege.md) | Kinderbeiträge: Zeichnungen ja, Stimmen nein | angenommen |
 | [0006](docs/decisions/0006-lizenzen.md) | MIT für Code, CC BY 4.0 für Assets | angenommen |
 | [0007](docs/decisions/0007-ci-und-tests.md) | CI-Ablauf, Secrets, Manifest-Gate, GUT | angenommen, Umsetzung offen |
-| [0008](docs/decisions/0008-crawler-baukasten.md) | Crawler-Baukasten (Garage), 53 Teile, 8 Vorlagen | angenommen, Feel-Check offen |
+| [0008](docs/decisions/0008-crawler-baukasten.md) | Crawler-Baukasten (Garage), 54 Teile, 9 Vorlagen | angenommen, Feel-Check offen |
 | [0009](docs/decisions/0009-gamepad-8bitdo.md) | Gamepad 8BitDo SN30 Pro, Knopf-Paare | Windows bestätigt, Android offen |
 | [0010](docs/decisions/0010-toene.md) | Töne per Code (Motor, Hupe, Plumps, Klick) | angenommen, Feel-Check offen |
 | [0011](docs/decisions/0011-modelle-werkzeug-licht-rauch.md) | Kenney-Modelle, Bagger/Radlader, Licht, Auspuffrauch, Touch-Tasten nur bei Touch | angenommen, Feel-Check offen |
 | [0012](docs/decisions/0012-zwei-spieler-farben-rand-update.md) | Zwei Spieler (geteilter Bildschirm), bunte Farben, Weltrand, Updater neben der Exe | angenommen, Feel-Check offen |
+| [0013](docs/decisions/0013-graben-und-flieger.md) | Bagger gräbt ins Terrain3D, Flieger ohne Absturz | angenommen, Feel-Check offen |
 
 ## Fahrphysik-Ziele (Spike)
 
@@ -150,3 +151,15 @@ Messung vom 26.10.2026 (Details in ADR 0002/0008):
     UI-Test 378 Checks. Rauchtest mit einem und zwei Spielern grün.
   - Fahrbot-Frage des PO beantwortet: Der Fahrbot ist der automatische Testfahrer der CI. Im Spiel steckt
     nur die FPS-Messrunde, versteckt hinter F3.
+- **2026-10-26** – Bagger gräbt, Flieger (ADR 0013):
+  - Frage des PO „Wie bewege ich die Schaufel?“: rechten Stick nach unten halten oder R3 drücken
+    (Tastatur E).
+  - **Graben:** Arm unten + leerer Löffel = weiche Mulde ins Terrain3D (erdbraun), Erde im Löffel.
+    Arm unten + voller Löffel = Haufen auskippen. Grenzen ±1,5 m, Kollision einmal pro Löffel neu.
+    Terrain3D 1.0.2 aktualisiert die Grafik nur mit `update_maps(..., all_regions = true)`; das ist im
+    Kontrollbild aufgefallen.
+  - **Flieger:** Aufbau und Vorlage; die Garage blendet die Crawler-Kategorien aus.
+    - Arcade-Flug ohne Absturz: ▲ Gas/steigen, ▼ sinken/bremsen, ◀ ▶ Kurve.
+    - Hält Höhe und Tempo von selbst, höchstens 30 m über Grund.
+  - Tests: Fahrbot 34 Metriken, 0 verfehlt (neu `terrain3d_graben`, `flieger`). UI-Test 400 Checks.
+    Rauchtests mit Crawler und Flieger, ein und zwei Spieler, grün.

@@ -55,6 +55,32 @@ const LANDING_FULL_SPEED := 6.0  # m/s Fallgeschwindigkeit für volle Lautstärk
 # --- Werkzeug (Bagger, Radlader; nur Optik) ---
 const TOOL_SPEED := 1.5  # volle Bewegung pro Sekunde
 
+# --- Graben mit dem Bagger (Terrain3D-Höhen, ADR 0013) ---
+const DIG_TRIGGER := 0.85  # Werkzeug-Stellung, ab der der Löffel gräbt bzw. auskippt
+const DIG_REACH := 0.8  # m: so weit über dem Boden darf die Löffelspitze sein und trotzdem greifen
+const DIG_RADIUS := 1.7  # m Radius der Mulde bzw. des Haufens (Gitter des Geländes: 1 m)
+const DIG_DEPTH := 0.45  # m pro Löffel
+const DIG_MAX_DEPTH := 1.5  # m höchstens unter dem Ursprungsboden (Crawler kommen immer heraus)
+const PILE_HEIGHT := 0.4  # m pro ausgekipptem Löffel
+const PILE_MAX_HEIGHT := 1.5  # m höchstens über dem Ursprungsboden
+
+# --- Flieger (Arcade-Flug ohne Absturz, ADR 0013) ---
+const PLANE_TAKEOFF_SPEED := 9.0  # m/s, ab hier hebt er mit Gas ab
+const PLANE_CRUISE_SPEED := 13.0  # m/s in der Luft
+const PLANE_ACCEL := 4.0  # m/s²
+const PLANE_BRAKE := 6.0  # m/s² am Boden ohne Gas
+const PLANE_TAXI_REVERSE_SPEED := 2.0  # m/s rückwärts rollen
+const PLANE_TAXI_TURN := 1.3  # rad/s am Boden
+const PLANE_AIR_TURN := 0.8  # rad/s in der Luft
+const PLANE_CLIMB_RATE := 3.0  # m/s steigen
+const PLANE_SINK_RATE := 3.0  # m/s sinken
+const PLANE_CLIMB_ACCEL := 5.0  # m/s², wie schnell Steigen/Sinken einsetzt
+const PLANE_MAX_ALTITUDE := 30.0  # m über Grund (unter der 64 m hohen Weltrand-Wand)
+const PLANE_GROUND_STICK := 3.0  # m/s nach unten am Boden, damit er auf Hängen bleibt
+const PLANE_FLOOR_MAX_ANGLE_DEG := 46.0  # steilerer Boden zählt als Wand
+const PLANE_VISUAL_BANK := 0.5  # rad Schräglage in der Kurve (nur Optik)
+const PLANE_ENGINE_HZ := 95.0  # Grundton des Motors
+
 # --- Spielzeug in der Welt (bunte Kegel und Kisten zum Umschubsen, ADR 0012) ---
 const TOY_CONE_MASS := 4.0  # kg; leicht genug, dass jeder Crawler ihn wegschiebt
 const TOY_BOX_MASS := 10.0  # kg

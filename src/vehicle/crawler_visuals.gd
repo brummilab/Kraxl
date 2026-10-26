@@ -6,6 +6,7 @@ const DARK := Color(0.18, 0.18, 0.2)
 const GLASS := Color(0.35, 0.55, 0.7)
 const CHROME := Color(0.75, 0.75, 0.78)
 const LAMP := Color(1.0, 0.95, 0.6)
+const DIRT := Color(0.45, 0.3, 0.17)
 
 
 ## Baut die Optik und liefert, was das Fahrzeug später bewegen oder schalten muss:
@@ -225,7 +226,20 @@ static func _excavator(root: Node3D, _spec: VehicleSpec, top: float, paint: Mate
 	_box(bucket, Vector3(0.5, 0.08, 0.35), Vector3(0, -0.32, -0.05), metal)
 	for x in [-0.22, -0.07, 0.07, 0.22]:
 		_box(bucket, Vector3(0.06, 0.1, 0.08), Vector3(x, -0.36, -0.25), dark)  # Zähne
-	return {"kind": &"bagger", "boom": boom, "stick": stick, "bucket": bucket}
+	var tip := _pivot(bucket, "Spitze", Vector3(0, -0.36, -0.25))  # hier greift der Löffel in die Erde
+	# Erde im Löffel: sichtbar, sobald der Löffel voll ist (ADR 0013).
+	var dirt := MeshInstance3D.new()
+	dirt.name = "Erde"
+	var dirt_mesh := SphereMesh.new()
+	dirt_mesh.radius = 0.24
+	dirt_mesh.height = 0.3
+	dirt_mesh.material = _material(DIRT)
+	dirt.mesh = dirt_mesh
+	dirt.position = Vector3(0, -0.2, -0.08)
+	dirt.scale = Vector3(1.0, 0.8, 0.8)
+	dirt.visible = false
+	bucket.add_child(dirt)
+	return {"kind": &"bagger", "boom": boom, "stick": stick, "bucket": bucket, "tip": tip, "dirt": dirt}
 
 
 static func _pivot(parent: Node3D, node_name: String, pos: Vector3) -> Node3D:

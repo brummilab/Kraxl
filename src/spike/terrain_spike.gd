@@ -20,8 +20,8 @@ const CAMERA_HEIGHT := 3.5
 
 const PLAYER_SPACING := 5.0  # Abstand der Startplätze im Zwei-Spieler-Modus (m)
 
-## Spieler 1 (Fahrbot-Runde, Screenshot und Tests nutzen ihn).
-var vehicle: KraxlVehicle
+## Spieler 1 (Fahrbot-Runde, Screenshot und Tests nutzen ihn): KraxlVehicle oder KraxlPlane.
+var vehicle
 var touch: TouchControls
 var players: Array[Player] = []
 
@@ -32,6 +32,7 @@ var _hud: Label
 var _bench_button: Button
 var _driver_input: InputSource
 var _layer: CanvasLayer
+var _digging: Digging
 var _benchmark_seconds := BENCHMARK_SECONDS
 var _bench_running := false
 var _bench_time := 0.0
@@ -54,6 +55,8 @@ func _ready() -> void:
 	_terrain = SpikeTerrain.create(self, _camera)
 	add_child(WorldBorder.new())
 	add_child(Playground.new())
+	_digging = Digging.new(_terrain)
+	add_child(_digging)
 
 	KraxlInput.setup()
 	Input.joy_connection_changed.connect(_on_joy_connection_changed)
@@ -82,8 +85,9 @@ func _ready() -> void:
 
 func _add_player(index: int, count: int) -> Player:
 	var player := Player.new()
-	player.vehicle = KraxlVehicle.new()
-	player.vehicle.design = GameState.design(index).duplicate_design()
+	var design := GameState.design(index).duplicate_design()
+	player.vehicle = KraxlPlane.new() if design.is_plane() else KraxlVehicle.new()
+	player.vehicle.design = design
 	var pos := SpikeTerrain.CENTER + Vector3((index - (count - 1) * 0.5) * PLAYER_SPACING, 0, 0)
 	pos.y = SpikeTerrain.height_at(pos.x, pos.z) + 1.0
 	player.start = Transform3D(Basis(), pos)
@@ -101,6 +105,7 @@ func _add_player(index: int, count: int) -> Player:
 	player.touch.show_tool = player.vehicle.has_tool()
 	player.input = CombinedInputSource.new([player.touch.source, ActionInputSource.new(index if count > 1 else -1)])
 	player.vehicle.input = player.input
+	_digging.vehicles.append(player.vehicle)
 	player.camera = _camera
 	return player
 
@@ -184,7 +189,7 @@ func _process(delta: float) -> void:
 
 
 ## Automatische Kamera ohne Zoom-Gesten (ADR 0003): folgt ruhig von hinten oben.
-func _follow_camera(camera: Camera3D, car: KraxlVehicle, delta: float) -> void:
+func _follow_camera(camera: Camera3D, car: Node3D, delta: float) -> void:
 	var back := car.global_basis.z
 	back.y = 0.0
 	back = back.normalized() if back.length() > 0.1 else Vector3.BACK
@@ -306,7 +311,7 @@ func _build_ui() -> void:
 
 class Player:
 	extends RefCounted
-	var vehicle: KraxlVehicle
+	var vehicle  # KraxlVehicle oder KraxlPlane
 	var camera: Camera3D
 	var touch: TouchControls
 	var input: InputSource

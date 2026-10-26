@@ -16,6 +16,11 @@ func get_part(category: StringName) -> Dictionary:
 	return PartCatalog.part(category, choices[category])
 
 
+## Aufbau „flieger“: im Gelände ein KraxlPlane statt eines Crawlers.
+func is_plane() -> bool:
+	return get_part(&"aufbau").get("flieger", false)
+
+
 func selected_extras() -> Array:
 	return choices[&"extras"]
 

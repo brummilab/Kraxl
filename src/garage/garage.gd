@@ -16,7 +16,8 @@ const SEPARATION := 10.0
 const MAX_PER_ROW := 9
 
 var design: CrawlerDesign
-var vehicle: KraxlVehicle
+## KraxlVehicle oder (Aufbau „flieger“) KraxlPlane auf der Drehscheibe.
+var vehicle: Node3D
 ## Wessen Crawler gerade gebaut wird (0 = Spieler 1).
 var player := 0
 var category: StringName = &"fahrgestell"
@@ -186,11 +187,30 @@ func _update_player_cards() -> void:
 func _spawn_vehicle() -> void:
 	if vehicle:
 		vehicle.queue_free()
-	vehicle = KraxlVehicle.new()
-	vehicle.design = design.duplicate_design()
-	vehicle.position = Vector3(0, 1.6, 0)
+	if design.is_plane():
+		var plane := KraxlPlane.new()
+		plane.preview = true
+		plane.design = design.duplicate_design()
+		plane.position = Vector3(0, 0.05, 0)
+		vehicle = plane
+	else:
+		var crawler := KraxlVehicle.new()
+		crawler.design = design.duplicate_design()
+		crawler.position = Vector3(0, 1.6, 0)
+		vehicle = crawler
 	vehicle.rotation.y = -0.6
 	add_child(vehicle)
+	_update_category_visibility()
+
+
+## Beim Flieger zählen nur Aufbau und Farbe; die Crawler-Kategorien verschwinden, bis wieder ein
+## Crawler-Aufbau gewählt ist.
+func _update_category_visibility() -> void:
+	var plane := design.is_plane()
+	for c in _category_cards:
+		_category_cards[c].visible = not plane or c == PRESET_CATEGORY or c in PartCatalog.PLANE_CATEGORIES
+	if _category_cards.has(category) and not _category_cards[category].visible:
+		show_category.call_deferred(&"aufbau")
 
 
 func _build_world() -> void:

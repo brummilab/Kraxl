@@ -11,6 +11,8 @@ const C := preload("res://src/vehicle/vehicle_constants.gd")
 signal landed(strength: float)
 ## Die Aufstellhilfe hat das Fahrzeug wieder auf die Räder gebracht.
 signal righted
+## Bagger: Löffel hat Erde aufgenommen (true) oder ausgekippt (false), siehe Digging.
+signal bucket_changed(full: bool)
 
 ## Bauplan; ohne Zuweisung der Standard-Crawler.
 var design := CrawlerDesign.new()
@@ -45,6 +47,8 @@ var _parts := {}
 var _light_was_pressed := false
 var _tool_amount := 0.0
 var _air_time := 0.0
+## Bagger: Erde im Löffel.
+var bucket_full := false
 var _fall_speed := 0.0
 
 
@@ -253,6 +257,31 @@ func set_lights(on: bool) -> void:
 	for lamp: StandardMaterial3D in _parts.get("lamps", []):
 		lamp.emission_enabled = on
 		lamp.albedo_color = CrawlerVisuals.LAMP if on else CrawlerVisuals.LAMP.darkened(0.6)
+
+
+## &"bagger", &"radlader" oder &"" ohne Werkzeug.
+func tool_kind() -> StringName:
+	return _parts.get("tool", {}).get("kind", &"")
+
+
+## Stellung des Werkzeugs: 0 = oben, 1 = ganz unten.
+func tool_amount() -> float:
+	return _tool_amount
+
+
+## Weltposition der Löffelzähne (nur Bagger).
+func tool_tip() -> Vector3:
+	var tip: Node3D = _parts.tool.tip
+	return tip.global_position
+
+
+func set_bucket_full(full: bool) -> void:
+	if full == bucket_full:
+		return
+	bucket_full = full
+	if _parts.get("tool", {}).has("dirt"):
+		_parts.tool.dirt.visible = full
+	bucket_changed.emit(full)
 
 
 ## Bagger-Arm bzw. Radlader-Schaufel folgen der Werkzeug-Taste weich (nur Optik).

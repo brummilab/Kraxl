@@ -27,6 +27,7 @@ func _ready() -> void:
 	await _test_sounds()
 	await _test_models_and_tools()
 	await _test_two_players_and_colors()
+	await _test_plane_and_digging()
 
 	for e in _logger.errors:
 		_failures.append("Skriptfehler: " + e)
@@ -563,5 +564,65 @@ func _test_two_players_and_colors() -> void:
 	_check(flowers.multimesh.instance_count == Playground.FLOWER_COUNT, "Blumenwiese steht")
 	var toys := playground.get_children().filter(func(c): return c is RigidBody3D)
 	_check(toys.size() >= 20, "Bunte Kegel und Kisten stehen")
+	stage.queue_free()
+	await get_tree().process_frame
+
+
+# --- Flieger und Graben (ADR 0013) --------------------------------------------
+
+
+func _test_plane_and_digging() -> void:
+	var garage: Node = load("res://scenes/garage/garage.tscn").instantiate()
+	add_child(garage)
+	await get_tree().process_frame
+	garage.show_category(&"raeder")
+	var plane_preset: Dictionary = PartCatalog.PRESETS.filter(func(p): return p.id == &"flieger")[0]
+	garage.design = CrawlerDesign.from_preset(plane_preset)
+	garage._spawn_vehicle()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(garage.vehicle is KraxlPlane, "Garage zeigt den Flieger")
+	_check(not garage._category_cards[&"raeder"].visible and garage._category_cards[&"farbe"].visible,
+		"Flieger: nur Aufbau und Farbe (Räder ausgeblendet)")
+	_check(garage.category == &"aufbau", "Ausgeblendete Kategorie wechselt zum Aufbau")
+	var before: Vector3 = garage.vehicle.global_position
+	for i in 30:
+		await get_tree().physics_frame
+	_check(garage.vehicle.global_position.is_equal_approx(before), "Flieger steht in der Garage still")
+	garage.design = CrawlerDesign.new()
+	garage._spawn_vehicle()
+	await get_tree().process_frame
+	_check(garage._category_cards[&"raeder"].visible, "Crawler: alle Kategorien wieder da")
+	garage.queue_free()
+	await get_tree().process_frame
+
+	# Bagger-Werkzeug: Spitze, Erde im Löffel, Signal.
+	var stage := Node3D.new()
+	add_child(stage)
+	var floor_body := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	shape.shape = WorldBoundaryShape3D.new()
+	floor_body.add_child(shape)
+	stage.add_child(floor_body)
+	var d := CrawlerDesign.new()
+	d.choices[&"aufbau"] = &"bagger"
+	var digger := KraxlVehicle.new()
+	digger.design = d
+	digger.sounds = false
+	digger.position = Vector3(0, 1.2, 0)
+	stage.add_child(digger)
+	_check(digger.tool_kind() == &"bagger", "Bagger meldet sein Werkzeug")
+	var signals := []
+	digger.bucket_changed.connect(func(full): signals.append(full))
+	digger.set_bucket_full(true)
+	_check(digger._parts.tool.dirt.visible and signals == [true], "Voller Löffel zeigt Erde")
+	digger.set_bucket_full(false)
+	_check(not digger._parts.tool.dirt.visible and signals == [true, false], "Ausgekippt: Löffel leer")
+	var up_tip := digger.tool_tip()
+	digger.input = InputSource.new()
+	digger.input.tool = 1.0
+	for i in 90:
+		await get_tree().process_frame
+	_check(digger.tool_tip().y < up_tip.y - 0.5, "Löffelspitze senkt sich zum Boden")
 	stage.queue_free()
 	await get_tree().process_frame
