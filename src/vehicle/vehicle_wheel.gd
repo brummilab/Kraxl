@@ -10,6 +10,7 @@ var travel := 0.35
 ## Lenkfaktor: 1 = Vorderachse, 0 = starr, negativ = gegenläufig (Allrad), positiv = Krebsgang.
 var steer_factor := 0.0
 var hub_color := Color(0.95, 0.55, 0.1)
+var rainbow := false
 ## Ketten-Laufwerk statt Rad: nur die Optik ändert sich, der Bodenkontakt bleibt die Kugel.
 var tracks := false
 ## Reifen-Teil (für das Kenney-Rad); leer = einfache Zylinder.
@@ -81,7 +82,7 @@ func _build_kenney_wheel() -> void:
 	var info := KenneyModels.wheel_mesh(tire)
 	var node := MeshInstance3D.new()
 	node.mesh = info.mesh
-	node.material_override = KenneyModels.paint_material(info.mesh, hub_color)
+	node.material_override = KenneyModels.paint_material(info.mesh, hub_color, rainbow, true)
 	var flip := Basis(Vector3.UP, PI) if position.x < 0.0 else Basis()
 	var scale_r: float = radius / info.radius
 	var scale_w: float = width / maxf(info.width, 0.01)
@@ -113,9 +114,7 @@ func _disc(r: float, h: float, color: Color) -> MeshInstance3D:
 	mesh.top_radius = r
 	mesh.bottom_radius = r
 	mesh.height = h
-	var material := StandardMaterial3D.new()
-	material.albedo_color = color
-	mesh.material = material
+	mesh.material = Paint.solid(color, rainbow and color == hub_color)
 	var node := MeshInstance3D.new()
 	node.mesh = mesh
 	return node

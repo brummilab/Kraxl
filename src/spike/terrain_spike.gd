@@ -6,7 +6,10 @@ extends Node3D
 ## Läuft auf Windows und Android. Knopf oben rechts startet die 5-min-Fahrbot-Runde;
 ## das Ergebnis steht danach auf dem Bildschirm und im Log (Remote-Debugger / adb logcat).
 ## Mit `-- --benchmark` startet die Runde sofort, `-- --benchmark-seconds=N` verkürzt sie,
-## `-- --screenshot=pfad.png` speichert ein Bild und beendet.
+## `-- --screenshot=pfad.png` speichert ein Bild und beendet, `-- --spieler=2` erzwingt zwei Spieler.
+## Zwei Spieler (ADR 0012): geteilter Bildschirm links/rechts, jeder mit eigenem Crawler, eigener
+## Kamera, eigener Touch-Hälfte, eigener Tastaturhälfte und eigenem Gamepad.
+## Weltrand: bunter Zaun mit unsichtbarer Wand; wer trotzdem hinausfällt, steht sofort wieder am Start.
 
 const C := preload("res://src/vehicle/vehicle_constants.gd")
 const GARAGE_SCENE := "res://scenes/garage/garage.tscn"
@@ -15,14 +18,20 @@ const TARGET_FPS := 30.0
 const CAMERA_DISTANCE := 8.0
 const CAMERA_HEIGHT := 3.5
 
+const PLAYER_SPACING := 5.0  # Abstand der Startplätze im Zwei-Spieler-Modus (m)
+
+## Spieler 1 (Fahrbot-Runde, Screenshot und Tests nutzen ihn).
 var vehicle: KraxlVehicle
 var touch: TouchControls
+var players: Array[Player] = []
 
+## Kamera der Hauptansicht; im Zwei-Spieler-Modus nur Mittelpunkt für Terrain3D und Hörposition.
 var _camera: Camera3D
 var _terrain: Terrain3D
 var _hud: Label
 var _bench_button: Button
 var _driver_input: InputSource
+var _layer: CanvasLayer
 var _benchmark_seconds := BENCHMARK_SECONDS
 var _bench_running := false
 var _bench_time := 0.0
@@ -31,30 +40,36 @@ var _result_text := ""
 
 
 func _ready() -> void:
+	var args := OS.get_cmdline_user_args()
+	var count := GameState.player_count()
+	for arg in args:
+		if arg.begins_with("--spieler="):
+			count = clampi(int(arg.get_slice("=", 1)), 1, GameState.MAX_PLAYERS)
+
 	_camera = Camera3D.new()
 	_camera.far = 1000.0
 	# Die Kamera folgt in _process; Physik-Interpolation würde sie doppelt glätten (Godot warnt).
 	_camera.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	add_child(_camera)
 	_terrain = SpikeTerrain.create(self, _camera)
+	add_child(WorldBorder.new())
+	add_child(Playground.new())
 
 	KraxlInput.setup()
 	Input.joy_connection_changed.connect(_on_joy_connection_changed)
-	vehicle = KraxlVehicle.new()
-	vehicle.design = GameState.design().duplicate_design()
-	var start := SpikeTerrain.CENTER
-	start.y = SpikeTerrain.height_at(start.x, start.z) + 1.0
-	vehicle.position = start
-	add_child(vehicle)
-
+	_layer = CanvasLayer.new()
+	add_child(_layer)
+	for i in count:
+		players.append(_add_player(i, count))
+	vehicle = players[0].vehicle
+	touch = players[0].touch
+	_driver_input = players[0].input
+	if count > 1:
+		_split_screen()
+	else:
+		_camera.global_position = vehicle.global_position + Vector3(0, CAMERA_HEIGHT, CAMERA_DISTANCE)
 	_build_ui()
-	touch.show_light = vehicle.has_lights()
-	touch.show_tool = vehicle.has_tool()
-	_driver_input = CombinedInputSource.new([touch.source, ActionInputSource.new()])
-	vehicle.input = _driver_input
-	_camera.global_position = start + Vector3(0, CAMERA_HEIGHT, CAMERA_DISTANCE)
 
-	var args := OS.get_cmdline_user_args()
 	for arg in args:
 		if arg.begins_with("--benchmark-seconds="):
 			_benchmark_seconds = float(arg.get_slice("=", 1))
@@ -63,6 +78,72 @@ func _ready() -> void:
 	if args.has("--benchmark") or _benchmark_seconds != BENCHMARK_SECONDS:
 		_start_benchmark()
 	set_dev_tools(OS.is_debug_build() or args.has("--dev") or _bench_running)
+
+
+func _add_player(index: int, count: int) -> Player:
+	var player := Player.new()
+	player.vehicle = KraxlVehicle.new()
+	player.vehicle.design = GameState.design(index).duplicate_design()
+	var pos := SpikeTerrain.CENTER + Vector3((index - (count - 1) * 0.5) * PLAYER_SPACING, 0, 0)
+	pos.y = SpikeTerrain.height_at(pos.x, pos.z) + 1.0
+	player.start = Transform3D(Basis(), pos)
+	player.vehicle.position = pos
+	add_child(player.vehicle)
+
+	player.touch = TouchControls.new()
+	if count > 1:
+		player.touch.fill_parent = false
+		player.touch.anchor_left = 0.5 * index
+		player.touch.anchor_right = 0.5 * (index + 1)
+		player.touch.anchor_bottom = 1.0
+	_layer.add_child(player.touch)
+	player.touch.show_light = player.vehicle.has_lights()
+	player.touch.show_tool = player.vehicle.has_tool()
+	player.input = CombinedInputSource.new([player.touch.source, ActionInputSource.new(index if count > 1 else -1)])
+	player.vehicle.input = player.input
+	player.camera = _camera
+	return player
+
+
+## Zwei Hälften nebeneinander, jede mit eigener Kamera in derselben 3D-Welt. Die Hauptansicht
+## zeichnet dann kein 3D mehr; ihre Kamera bleibt als Mittelpunkt für Terrain3D und als Ohr.
+func _split_screen() -> void:
+	var view_layer := CanvasLayer.new()
+	view_layer.layer = -1  # unter den Tasten
+	add_child(view_layer)
+	var row := HBoxContainer.new()
+	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	row.add_theme_constant_override("separation", 6)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	view_layer.add_child(row)
+	var divider := ColorRect.new()
+	divider.color = Color.WHITE
+	divider.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	view_layer.add_child(divider)
+	view_layer.move_child(divider, 0)  # weiße Trennlinie scheint durch die Lücke
+
+	for player in players:
+		var container := SubViewportContainer.new()
+		container.stretch = true
+		container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(container)
+		var view := SubViewport.new()
+		view.world_3d = get_viewport().world_3d
+		view.physics_object_picking = false
+		container.add_child(view)
+		var camera := Camera3D.new()
+		camera.far = 1000.0
+		camera.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+		view.add_child(camera)
+		camera.global_position = player.vehicle.global_position + Vector3(0, CAMERA_HEIGHT, CAMERA_DISTANCE)
+		player.camera = camera
+	get_viewport().disable_3d = true
+
+
+func _exit_tree() -> void:
+	get_viewport().disable_3d = false  # die Garage braucht die Hauptansicht wieder
 
 
 func set_dev_tools(visible_now: bool) -> void:
@@ -77,7 +158,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## Für Review-Bilder (M2): nach 4 s Fahrt Bild speichern und beenden.
 func _save_screenshot_later(path: String) -> void:
-	vehicle.input = BotInputSource.new([{"duration": 10.0, "throttle": 0.6, "steer": 0.3}])
+	for player in players:
+		player.vehicle.input = BotInputSource.new([{"duration": 10.0, "throttle": 0.6, "steer": 0.3}])
 	await get_tree().create_timer(4.0).timeout
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png(path)
@@ -88,7 +170,11 @@ func _save_screenshot_later(path: String) -> void:
 func _process(delta: float) -> void:
 	if Input.is_action_just_pressed(KraxlInput.GARAGE):
 		open_garage()
-	_follow_camera(delta)
+	for player in players:
+		_follow_camera(player.camera, player.vehicle, delta)
+	if players.size() > 1:
+		_camera.global_position = (players[0].vehicle.global_position + players[1].vehicle.global_position) * 0.5 \
+			+ Vector3.UP * CAMERA_HEIGHT
 	if _bench_running:
 		_frame_times.append(delta)
 		_bench_time += delta
@@ -98,15 +184,23 @@ func _process(delta: float) -> void:
 
 
 ## Automatische Kamera ohne Zoom-Gesten (ADR 0003): folgt ruhig von hinten oben.
-func _follow_camera(delta: float) -> void:
-	var back := vehicle.global_basis.z
+func _follow_camera(camera: Camera3D, car: KraxlVehicle, delta: float) -> void:
+	var back := car.global_basis.z
 	back.y = 0.0
 	back = back.normalized() if back.length() > 0.1 else Vector3.BACK
-	var target := vehicle.global_position + back * CAMERA_DISTANCE + Vector3.UP * CAMERA_HEIGHT
+	var target := car.global_position + back * CAMERA_DISTANCE + Vector3.UP * CAMERA_HEIGHT
 	var ground := SpikeTerrain.height_at(target.x, target.z) + 1.5
 	target.y = maxf(target.y, ground)
-	_camera.global_position = _camera.global_position.lerp(target, 1.0 - exp(-3.0 * delta))
-	_camera.look_at(vehicle.global_position + Vector3.UP)
+	camera.global_position = camera.global_position.lerp(target, 1.0 - exp(-3.0 * delta))
+	camera.look_at(car.global_position + Vector3.UP)
+
+
+## Aus der Welt gefallen (Rand, Loch)? Dann sofort und ohne Aufhebens zurück an den Start.
+func _physics_process(_delta: float) -> void:
+	for player in players:
+		if WorldBorder.is_lost(player.vehicle.global_position):
+			player.vehicle.reset_to(player.start)
+			player.camera.global_position = player.start.origin + Vector3(0, CAMERA_HEIGHT, CAMERA_DISTANCE)
 
 
 func _on_joy_connection_changed(device: int, connected: bool) -> void:
@@ -166,7 +260,8 @@ func _update_hud() -> void:
 
 func _system_info() -> String:
 	var v := Engine.get_version_info()
-	return "Godot %s | Terrain3D %s | %s | %s | %s" % [
+	return "Kraxl %s | Godot %s | Terrain3D %s | %s | %s | %s" % [
+		GameState.version(),
 		v.string,
 		_terrain.get_version(),
 		RenderingServer.get_current_rendering_method(),
@@ -176,10 +271,7 @@ func _system_info() -> String:
 
 
 func _build_ui() -> void:
-	var layer := CanvasLayer.new()
-	add_child(layer)
-	touch = TouchControls.new()
-	layer.add_child(touch)
+	var layer := _layer
 
 	_hud = Label.new()
 	# Breite bis vor den Fahrbot-Knopf begrenzen und umbrechen, sonst läuft lange Info darunter.
@@ -210,3 +302,12 @@ func _build_ui() -> void:
 	garage.position = Vector2(16, 16)
 	garage.pressed.connect(open_garage)
 	layer.add_child(garage)
+
+
+class Player:
+	extends RefCounted
+	var vehicle: KraxlVehicle
+	var camera: Camera3D
+	var touch: TouchControls
+	var input: InputSource
+	var start: Transform3D

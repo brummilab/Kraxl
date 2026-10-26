@@ -23,6 +23,7 @@ static func draw_category(ci: CanvasItem, category: StringName, r: Rect2, accent
 		&"los": _flag(ci, r, Color(0.2, 0.75, 0.3))
 		&"wuerfel": _dice(ci, r)
 		&"garage": _wrench(ci, r)
+		&"spieler": draw_part(ci, category, &"1", r, accent)
 
 
 static func draw_part(ci: CanvasItem, category: StringName, id: StringName, r: Rect2, accent: Color) -> void:
@@ -83,10 +84,34 @@ static func draw_part(ci: CanvasItem, category: StringName, id: StringName, r: R
 		&"aufbau":
 			_body_silhouette(ci, id, c, u, accent)
 		&"farbe":
-			ci.draw_circle(c, 32 * u, PartCatalog.part(category, id).farbe)
+			if PartCatalog.part(category, id).get("regenbogen", false):
+				_rainbow(ci, c, 32 * u)
+			else:
+				ci.draw_circle(c, 32 * u, PartCatalog.part(category, id).farbe)
 			ci.draw_arc(c, 32 * u, 0, TAU, 48, INK, 3 * u)
 		&"extras":
 			_extra(ci, id, c, u, accent)
+		&"spieler":
+			# Spielerzahl: eine oder zwei Figuren nebeneinander.
+			var count := int(String(id))
+			for i in count:
+				var offset := (i - (count - 1) * 0.5) * 34.0 * u
+				_figure(ci, c + Vector2(offset, 0), u * (1.0 if count == 1 else 0.8), [accent, Color(0.25, 0.7, 0.3)][i], 0)
+		&"fahrer":
+			# Wessen Crawler wird gebaut? Figur mit 1 bzw. 2 Punkten auf dem Helm (Form, nicht nur Farbe).
+			_figure(ci, c, u, accent, int(String(id)))
+
+
+## Kinderfigur mit Helm; `dots` Punkte auf dem Helm unterscheiden Spieler 1 und 2.
+static func _figure(ci: CanvasItem, c: Vector2, u: float, color: Color, dots: int) -> void:
+	ci.draw_rect(Rect2(c + Vector2(-16, 4) * u, Vector2(32, 34) * u), color)
+	ci.draw_circle(c + Vector2(0, -14) * u, 15 * u, Color(0.98, 0.82, 0.68))
+	ci.draw_arc(c + Vector2(0, -14) * u, 15 * u, PI, TAU, 16, color.darkened(0.2), 9 * u)
+	for i in dots:
+		ci.draw_circle(c + Vector2((i - (dots - 1) * 0.5) * 12, -25) * u, 4.5 * u, Color.WHITE)
+	ci.draw_circle(c + Vector2(-5, -12) * u, 2.2 * u, INK)
+	ci.draw_circle(c + Vector2(5, -12) * u, 2.2 * u, INK)
+	ci.draw_arc(c + Vector2(0, -9) * u, 6 * u, 0.3, PI - 0.3, 8, INK, 2 * u)
 
 
 static func _wheel(ci: CanvasItem, c: Vector2, radius: float, tire: StringName, hub: Color) -> void:
@@ -170,12 +195,28 @@ static func _steering_wheel(ci: CanvasItem, c: Vector2, radius: float) -> void:
 	ci.draw_circle(c, radius * 0.22, INK)
 
 
+const RAINBOW := [
+	Color(0.92, 0.12, 0.12), Color(1.0, 0.5, 0.05), Color(1.0, 0.85, 0.05),
+	Color(0.12, 0.7, 0.25), Color(0.12, 0.35, 0.95), Color(0.6, 0.22, 0.92),
+]
+
+
 static func _palette(ci: CanvasItem, r: Rect2) -> void:
 	var c := r.get_center()
-	var colors: Array = PartCatalog.parts(&"farbe").map(func(p): return p.farbe)
-	for i in 6:
-		var a := TAU * i / 6.0 - PI / 2
-		ci.draw_circle(c + Vector2.from_angle(a) * r.size.x * 0.22, r.size.x * 0.11, colors[i])
+	for i in RAINBOW.size():
+		var a := TAU * i / RAINBOW.size() - PI / 2
+		ci.draw_circle(c + Vector2.from_angle(a) * r.size.x * 0.22, r.size.x * 0.11, RAINBOW[i])
+
+
+## Regenbogen-Lack: Tortenstücke in allen Farben (Form: viele Stücke statt einer Fläche).
+static func _rainbow(ci: CanvasItem, c: Vector2, radius: float) -> void:
+	for i in RAINBOW.size():
+		var a0 := TAU * i / RAINBOW.size() - PI / 2
+		var a1 := TAU * (i + 1) / RAINBOW.size() - PI / 2
+		var pts := PackedVector2Array([c])
+		for k in 7:
+			pts.append(c + Vector2.from_angle(lerpf(a0, a1, k / 6.0)) * radius)
+		ci.draw_colored_polygon(pts, RAINBOW[i])
 
 
 static func _star(ci: CanvasItem, c: Vector2, radius: float, color: Color) -> void:

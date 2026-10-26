@@ -17,6 +17,7 @@ const SCENARIOS := [
 	"spalt_15cm",
 	"aufstellen",
 	"terrain3d_hang_quer",
+	"terrain3d_rand",
 	"baukasten",
 ]
 const SPAWN_CLEARANCE := 0.85  # Karosserie-Ursprung über dem Boden beim Absetzen
@@ -164,6 +165,31 @@ func _scenario_terrain3d_hang_quer() -> void:
 	var m := await _measure_parked(vehicle, 10.0)
 	_report("terrain3d_hang_quer", "Drift in 10 s", m.drift, C.MAX_PARKED_DRIFT_M, "m")
 	_report("terrain3d_hang_quer", "Winkelgeschw. im Stand", m.max_angular, C.MAX_PARKED_ANGULAR_VELOCITY, "rad/s")
+
+
+## Vollgas auf den Weltrand zu: Der Zaun (unsichtbare Wand) muss den Crawler im Gelände halten.
+func _scenario_terrain3d_rand() -> void:
+	if not ClassDB.class_exists("Terrain3D"):
+		_report("terrain3d_rand", "Terrain3D geladen", 1.0, 0.0, "")
+		return
+	var camera := Camera3D.new()
+	_stage.add_child(camera)
+	SpikeTerrain.create(_stage, camera)
+	_stage.add_child(WorldBorder.new())
+	await _run(0.2)
+	var edge := float(SpikeTerrain.REGION_SIZE)
+	var start := Vector3(128, 0, edge - 20.0)
+	start.y = SpikeTerrain.height_at(start.x, start.z) + SPAWN_CLEARANCE
+	var vehicle := _spawn(Transform3D(Basis(Vector3.UP, PI), start))  # Blick nach +Z, zum Rand
+	vehicle.input = BotInputSource.new([{"duration": 10.0, "throttle": 1.0, "steer": 0.0}])
+	var m := {"closest": INF, "lost": 0.0, "start_z": start.z}  # Lambdas kopieren lokale Variablen
+	await _run(10.0, func():
+		m.closest = minf(m.closest, edge - vehicle.global_position.z)
+		if WorldBorder.is_lost(vehicle.global_position):
+			m.lost = 1.0)
+	_report("terrain3d_rand", "Fahrt bis zum Zaun", vehicle.global_position.z - m.start_z, 10.0, "m", true)
+	_report("terrain3d_rand", "Abstand zum Geländerand, kleinster", m.closest, 1.0, "m", true)
+	_report("terrain3d_rand", "aus der Welt gefallen", m.lost, 0.0, "")
 
 
 ## Pflicht für JEDE Teilekombination (ADR 0008): am 35°-Hang quer und bergauf parken ohne Drift

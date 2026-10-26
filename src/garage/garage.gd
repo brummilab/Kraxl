@@ -3,41 +3,54 @@ extends Node3D
 ## Würfel (Zufalls-Crawler) und Zielflagge (losfahren). Alles per Antippen oder Gamepad,
 ## kein Ziehen, kein Text. Jede Änderung sieht man sofort am Crawler auf der Drehscheibe.
 ## `-- --screenshot=pfad.png` speichert ein Bild und beendet (Review, M2),
-## `-- --kategorie=name` öffnet eine bestimmte Kategorie.
+## `-- --kategorie=name` öffnet eine bestimmte Kategorie, `-- --spieler=2 --fahrer=2` zeigt den
+## Zwei-Spieler-Modus mit dem Crawler von Spieler 2.
+## Zwei Spieler (ADR 0012): Die Figuren-Karte schaltet zwischen einem und zwei Spielern um; bei zwei
+## Spielern wählen zwei Helm-Karten (ein bzw. zwei Punkte), wessen Crawler gerade gebaut wird.
 
 const WORLD_SCENE := "res://scenes/spike/terrain_spike.tscn"
 ## Vorlagen (fertige Crawler) stehen als erste „Kategorie“ links, sind aber kein Teil des Bauplans.
 const PRESET_CATEGORY := &"vorlagen"
 const MARGIN := 16.0
 const SEPARATION := 10.0
+const MAX_PER_ROW := 9
 
 var design: CrawlerDesign
 var vehicle: KraxlVehicle
+## Wessen Crawler gerade gebaut wird (0 = Spieler 1).
+var player := 0
 var category: StringName = &"fahrgestell"
 
 var _camera: Camera3D
 var _orbit := 0.6
 var _category_cards := {}  # Kategorie -> IconCard
-var _part_row: HBoxContainer
+var _part_rows: VBoxContainer
 var _part_cards: Array[IconCard] = []
 var _sfx: AudioStreamPlayer
 var _sounds := {}
 var _rng := RandomNumberGenerator.new()
+var _players_card: IconCard
+var _player_cards: Array[IconCard] = []
 
 
 func _ready() -> void:
 	KraxlInput.setup()
 	Input.joy_connection_changed.connect(_on_joy_connection_changed)
-	design = GameState.design().duplicate_design()
+	design = GameState.design(player).duplicate_design()
 	_build_world()
 	_build_ui()
 	_spawn_vehicle()
+	_update_player_cards()
 	show_category(category)
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--kategorie="):
 			show_category(StringName(arg.get_slice("=", 1)))
 		if arg.begins_with("--screenshot="):
 			_save_screenshot_later(arg.get_slice("=", 1))
+		if arg.begins_with("--spieler="):
+			set_player_count(int(arg.get_slice("=", 1)))
+		if arg.begins_with("--fahrer="):
+			select_player(int(arg.get_slice("=", 1)) - 1)
 
 
 func _process(delta: float) -> void:
@@ -68,14 +81,26 @@ func show_category(new_category: StringName) -> void:
 	_part_cards.clear()
 
 	var parts: Array = PartCatalog.PRESETS if category == PRESET_CATEGORY else PartCatalog.parts(category)
-	var size_px := _part_card_size(parts.size())
-	for p in parts:
+	# Viele Teile (Farben) in zwei Reihen statt winziger Karten; Wischen bleibt unnötig.
+	var rows := 1 if parts.size() <= MAX_PER_ROW else 2
+	var per_row := ceili(parts.size() / float(rows))
+	var size_px := _part_card_size(per_row, rows)
+	for row in _part_rows.get_children():
+		row.queue_free()
+	var row_box: HBoxContainer
+	for i in parts.size():
+		if i % per_row == 0:
+			row_box = HBoxContainer.new()
+			row_box.alignment = BoxContainer.ALIGNMENT_CENTER
+			row_box.add_theme_constant_override("separation", int(SEPARATION))
+			_part_rows.add_child(row_box)
+		var p: Dictionary = parts[i]
 		var card := IconCard.new(category, p.id, size_px)
 		card.accent = design.get_part(&"farbe").farbe
 		if category == PRESET_CATEGORY:
 			card.preset = p
 		card.pressed.connect(choose_part.bind(card))
-		_part_row.add_child(card)
+		row_box.add_child(card)
 		_part_cards.append(card)
 	_update_selection()
 	var focus_card := _part_cards.filter(func(c): return c.selected)
@@ -94,7 +119,7 @@ func choose_part(card: IconCard) -> void:
 	if card.category in [&"farbe", PRESET_CATEGORY]:
 		_refresh_accent()
 	_spawn_vehicle()
-	GameState.set_design(design)
+	GameState.set_design(design, player)
 
 
 func _update_selection() -> void:
@@ -108,13 +133,51 @@ func roll_dice() -> void:
 	_refresh_accent()
 	show_category(category)
 	_spawn_vehicle()
-	GameState.set_design(design)
+	GameState.set_design(design, player)
 	_play(&"wuerfel")
 
 
 func go() -> void:
-	GameState.set_design(design)
+	GameState.set_design(design, player)
 	get_tree().change_scene_to_file(WORLD_SCENE)
+
+
+## Ein oder zwei Spieler. Bei einem Spieler wird immer Spieler 1 gebaut.
+func set_player_count(count: int) -> void:
+	GameState.set_player_count(count)
+	if GameState.player_count() == 1 and player != 0:
+		select_player(0)
+	_update_player_cards()
+	_play(&"spieler")
+
+
+func toggle_players() -> void:
+	set_player_count(2 if GameState.player_count() == 1 else 1)
+	_players_card.bounce()
+
+
+## Wechselt, wessen Crawler auf der Drehscheibe steht und gebaut wird.
+func select_player(index: int) -> void:
+	GameState.set_design(design, player)
+	player = index
+	design = GameState.design(player).duplicate_design()
+	_refresh_accent()
+	show_category(category)
+	_spawn_vehicle()
+	_update_player_cards()
+	_play(&"spieler")
+
+
+func _update_player_cards() -> void:
+	var count := GameState.player_count()
+	_players_card.part_id = StringName(str(count))
+	_players_card.queue_redraw()
+	for i in _player_cards.size():
+		var card := _player_cards[i]
+		card.visible = count > 1
+		card.selected = i == player
+		card.accent = GameState.design(i).get_part(&"farbe").farbe if i != player else design.get_part(&"farbe").farbe
+		card.queue_redraw()
 
 
 # --- Aufbau ------------------------------------------------------------------
@@ -169,6 +232,7 @@ func _build_world() -> void:
 		_sounds[categories[i]] = Sfx.blip(pitches[i % pitches.size()])
 	_sounds[&"kategorie"] = Sfx.blip(392.0, 0.06)
 	_sounds[&"wuerfel"] = Sfx.blip(330.0, 0.2)
+	_sounds[&"spieler"] = Sfx.blip(494.0, 0.12)
 
 
 func _build_ui() -> void:
@@ -205,6 +269,17 @@ func _build_ui() -> void:
 	top_row.alignment = BoxContainer.ALIGNMENT_END
 	top_row.add_theme_constant_override("separation", int(SEPARATION * 2))
 	right.add_child(top_row)
+	_players_card = IconCard.new(&"spieler", &"1", cat_size * 1.4)
+	_players_card.pressed.connect(toggle_players)
+	top_row.add_child(_players_card)
+	for i in GameState.MAX_PLAYERS:
+		var card := IconCard.new(&"fahrer", StringName(str(i + 1)), cat_size * 1.4)
+		card.pressed.connect(_on_player_card.bind(i))
+		top_row.add_child(card)
+		_player_cards.append(card)
+	var spacer_top := Control.new()
+	spacer_top.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top_row.add_child(spacer_top)
 	var dice := IconCard.new(&"wuerfel", &"", cat_size * 1.4)
 	dice.pressed.connect(func():
 		dice.bounce()
@@ -218,10 +293,14 @@ func _build_ui() -> void:
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right.add_child(spacer)
 
-	_part_row = HBoxContainer.new()
-	_part_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_part_row.add_theme_constant_override("separation", int(SEPARATION))
-	right.add_child(_part_row)
+	_part_rows = VBoxContainer.new()
+	_part_rows.add_theme_constant_override("separation", int(SEPARATION))
+	right.add_child(_part_rows)
+
+
+func _on_player_card(index: int) -> void:
+	_player_cards[index].bounce()
+	select_player(index)
 
 
 func _garage_categories() -> Array[StringName]:
@@ -236,11 +315,12 @@ func _category_card_size() -> float:
 	return clampf((h - 2 * MARGIN - (n - 1) * SEPARATION * 0.6) / n, 48.0, 110.0)
 
 
-## Teile-Karten so groß wie möglich, aber alle in einer Reihe (kein Wischen nötig).
-func _part_card_size(count: int) -> float:
+## Teile-Karten so groß wie möglich, aber alle sichtbar (kein Wischen nötig).
+func _part_card_size(per_row: int, rows := 1) -> float:
 	var view := get_viewport().get_visible_rect().size
 	var width := view.x - 2 * MARGIN - _category_card_size() - SEPARATION * 2
-	return clampf(minf(view.y * 0.22, width / count - SEPARATION), 70.0, 170.0)
+	var height := view.y * (0.22 if rows == 1 else 0.17)
+	return clampf(minf(height, width / per_row - SEPARATION), 56.0, 170.0)
 
 
 func _refresh_accent() -> void:
@@ -248,6 +328,8 @@ func _refresh_accent() -> void:
 	for card in _category_cards.values() + _part_cards:
 		card.accent = color
 		card.queue_redraw()
+	if not _player_cards.is_empty():
+		_update_player_cards()
 
 
 func _play(key: StringName) -> void:

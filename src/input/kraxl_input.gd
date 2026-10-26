@@ -29,19 +29,40 @@ const STICK_DEADZONE := 0.3
 const EXTRA_MAPPINGS := "res://data/gamecontrollerdb_extra.txt"
 
 
+## Gamepad-Belegung der Fahraktionen: Knöpfe und Achsen [Achse, Richtung]. Gilt für alle Pads
+## (Ein-Spieler) und wird im Zwei-Spieler-Modus je Pad direkt abgefragt (siehe pad_strength).
+const PAD := {
+	FORWARD: {"buttons": [JOY_BUTTON_A, JOY_BUTTON_B, JOY_BUTTON_RIGHT_SHOULDER], "axes": [[JOY_AXIS_TRIGGER_RIGHT, 1.0]]},
+	BACKWARD: {"buttons": [JOY_BUTTON_X, JOY_BUTTON_Y, JOY_BUTTON_LEFT_SHOULDER], "axes": [[JOY_AXIS_TRIGGER_LEFT, 1.0]]},
+	LEFT: {"buttons": [JOY_BUTTON_DPAD_LEFT], "axes": [[JOY_AXIS_LEFT_X, -1.0]]},
+	RIGHT: {"buttons": [JOY_BUTTON_DPAD_RIGHT], "axes": [[JOY_AXIS_LEFT_X, 1.0]]},
+	HORN: {"buttons": [JOY_BUTTON_LEFT_STICK], "axes": []},
+	LIGHTS: {"buttons": [JOY_BUTTON_START], "axes": []},
+	TOOL: {"buttons": [JOY_BUTTON_RIGHT_STICK], "axes": [[JOY_AXIS_RIGHT_Y, 1.0]]},
+}
+## Tastatur im Ein-Spieler-Modus: alles auf einmal.
+const KEYS := {
+	FORWARD: [KEY_UP, KEY_W], BACKWARD: [KEY_DOWN, KEY_S], LEFT: [KEY_LEFT, KEY_A], RIGHT: [KEY_RIGHT, KEY_D],
+	HORN: [KEY_H, KEY_SPACE], LIGHTS: [KEY_L], TOOL: [KEY_E],
+}
+## Tastatur im Zwei-Spieler-Modus: Spieler 1 links (WASD), Spieler 2 rechts (Pfeiltasten).
+const PLAYER_KEYS := [
+	{FORWARD: [KEY_W], BACKWARD: [KEY_S], LEFT: [KEY_A], RIGHT: [KEY_D], HORN: [KEY_SPACE], LIGHTS: [KEY_Q], TOOL: [KEY_E]},
+	{FORWARD: [KEY_UP], BACKWARD: [KEY_DOWN], LEFT: [KEY_LEFT], RIGHT: [KEY_RIGHT], HORN: [KEY_ENTER],
+		LIGHTS: [KEY_END], TOOL: [KEY_PAGEDOWN]},
+]
+
+
 ## Registriert die Actions einmalig. Idempotent, darf von jeder Szene aufgerufen werden.
 static func setup() -> void:
 	if InputMap.has_action(FORWARD):
 		return
 	load_extra_mappings(EXTRA_MAPPINGS)
-	_add(FORWARD, [KEY_UP, KEY_W], [JOY_BUTTON_A, JOY_BUTTON_B, JOY_BUTTON_RIGHT_SHOULDER], [[JOY_AXIS_TRIGGER_RIGHT, 1.0]])
-	_add(BACKWARD, [KEY_DOWN, KEY_S], [JOY_BUTTON_X, JOY_BUTTON_Y, JOY_BUTTON_LEFT_SHOULDER], [[JOY_AXIS_TRIGGER_LEFT, 1.0]])
-	_add(LEFT, [KEY_LEFT, KEY_A], [JOY_BUTTON_DPAD_LEFT], [[JOY_AXIS_LEFT_X, -1.0]])
-	_add(RIGHT, [KEY_RIGHT, KEY_D], [JOY_BUTTON_DPAD_RIGHT], [[JOY_AXIS_LEFT_X, 1.0]])
+	for action in PAD:
+		_add(action, KEYS[action], PAD[action].buttons, PAD[action].axes)
+		for player in PLAYER_KEYS.size():
+			_add(player_action(action, player), PLAYER_KEYS[player][action], [], [])
 	_add(GARAGE, [KEY_G, KEY_ESCAPE], [JOY_BUTTON_BACK], [])
-	_add(HORN, [KEY_H, KEY_SPACE], [JOY_BUTTON_LEFT_STICK], [])
-	_add(LIGHTS, [KEY_L], [JOY_BUTTON_START], [])
-	_add(TOOL, [KEY_E], [JOY_BUTTON_RIGHT_STICK], [[JOY_AXIS_RIGHT_Y, 1.0]])
 
 	# Menüs (Garage): Godot 4.7 belegt ui_* standardmäßig nur mit Tasten. Steuerkreuz und Stick
 	# wandern zwischen den Karten, beide rechten Knöpfe bestätigen, egal welches Layout gemeldet wird.
@@ -50,6 +71,32 @@ static func setup() -> void:
 	_add_joy(&"ui_right", [JOY_BUTTON_DPAD_RIGHT], [[JOY_AXIS_LEFT_X, 1.0]])
 	_add_joy(&"ui_up", [JOY_BUTTON_DPAD_UP], [[JOY_AXIS_LEFT_Y, -1.0]])
 	_add_joy(&"ui_down", [JOY_BUTTON_DPAD_DOWN], [[JOY_AXIS_LEFT_Y, 1.0]])
+
+
+## Tastatur-Action eines Spielers im Zwei-Spieler-Modus (0 = Spieler 1).
+static func player_action(action: StringName, player: int) -> StringName:
+	return StringName("%s_s%d" % [action, player + 1])
+
+
+## Gamepad, das ein Spieler im Zwei-Spieler-Modus steuert: das n-te angeschlossene, sonst -1.
+static func player_pad(player: int) -> int:
+	var pads := Input.get_connected_joypads()
+	return pads[player] if player < pads.size() else -1
+
+
+## Stärke einer Fahraktion an genau einem Gamepad (0..1), mit derselben Totzone wie die Actions.
+static func pad_strength(action: StringName, device: int) -> float:
+	if device < 0:
+		return 0.0
+	var strength := 0.0
+	for button in PAD[action].buttons:
+		if Input.is_joy_button_pressed(device, button):
+			strength = 1.0
+	for axis in PAD[action].axes:
+		var v: float = Input.get_joy_axis(device, axis[0]) * axis[1]
+		if v > STICK_DEADZONE:
+			strength = maxf(strength, (v - STICK_DEADZONE) / (1.0 - STICK_DEADZONE))
+	return strength
 
 
 ## Lädt zusätzliche SDL-Mappings (eine Zeile pro Controller). Gibt die Zahl der Einträge zurück.

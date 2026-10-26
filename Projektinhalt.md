@@ -23,10 +23,11 @@ offene Welt (ca. 1×1 km) mit Hängen, Steinen, Matsch und Toren. Ohne Punkte, o
 | [0005](docs/decisions/0005-kinderbeitraege.md) | Kinderbeiträge: Zeichnungen ja, Stimmen nein | angenommen |
 | [0006](docs/decisions/0006-lizenzen.md) | MIT für Code, CC BY 4.0 für Assets | angenommen |
 | [0007](docs/decisions/0007-ci-und-tests.md) | CI-Ablauf, Secrets, Manifest-Gate, GUT | angenommen, Umsetzung offen |
-| [0008](docs/decisions/0008-crawler-baukasten.md) | Crawler-Baukasten (Garage), 48 Teile, 8 Vorlagen | angenommen, Feel-Check offen |
+| [0008](docs/decisions/0008-crawler-baukasten.md) | Crawler-Baukasten (Garage), 53 Teile, 8 Vorlagen | angenommen, Feel-Check offen |
 | [0009](docs/decisions/0009-gamepad-8bitdo.md) | Gamepad 8BitDo SN30 Pro, Knopf-Paare | Windows bestätigt, Android offen |
 | [0010](docs/decisions/0010-toene.md) | Töne per Code (Motor, Hupe, Plumps, Klick) | angenommen, Feel-Check offen |
 | [0011](docs/decisions/0011-modelle-werkzeug-licht-rauch.md) | Kenney-Modelle, Bagger/Radlader, Licht, Auspuffrauch, Touch-Tasten nur bei Touch | angenommen, Feel-Check offen |
+| [0012](docs/decisions/0012-zwei-spieler-farben-rand-update.md) | Zwei Spieler (geteilter Bildschirm), bunte Farben, Weltrand, Updater neben der Exe | angenommen, Feel-Check offen |
 
 ## Fahrphysik-Ziele (Spike)
 
@@ -132,3 +133,20 @@ Messung vom 26.10.2026 (Details in ADR 0002/0008):
     - Die bisherigen Werte sind unverändert.
     - Neu schlechtester quer: Vorlage Radlader, Drift 0,0 mm.
   - UI-Test: 347 Checks. Spielszenen-Rauchtest grün.
+- **2026-10-26** – Zwei Spieler, Farben, Weltrand, Updater (ADR 0012):
+  - **Zwei Spieler:** geteilter Bildschirm links/rechts.
+    - Garage: Figuren-Karte schaltet 1/2 Spieler, Helm-Karten (1 bzw. 2 Punkte) wählen den Crawler.
+    - Eingabe: je Spieler ein Gamepad, eine Tastaturhälfte (WASD bzw. Pfeiltasten) und eine Touch-Hälfte.
+  - **Bunt:** 13 Lackfarben inkl. Regenbogen (wandert beim Fahren); farbige Felgen und Zierteile.
+    Welt mit Blumenwiese, Kegel-Slalom, Kistenturm (umschubsbar), kräftigerem Himmel.
+  - **„Der Fahrer fällt“:** Am Geländerand ging es ins Leere. Jetzt hält ein bunter Zaun mit unsichtbarer
+    Wand auf. Wer trotzdem hinausfällt, steht sofort wieder am Start. Neues Fahrbot-Szenario
+    `terrain3d_rand`.
+  - **Updater:** Das Spiel bleibt offline (Kinder-Regel 3).
+    - Die CI veröffentlicht bei jedem grünen main-Push ein Release.
+    - `Kraxl-Update.cmd` im Spielordner holt es, prüft die SHA-256-Prüfsumme und ersetzt die Dateien.
+    - Mit PowerShell 7.4 gegen einen lokalen Testserver geprüft: Update, „aktuell“, beschädigt.
+  - Tests: Fahrbot 22 Metriken, 0 verfehlt (109 Baupläne, neu `terrain3d_rand`: 4,2 m vor dem Rand gestoppt).
+    UI-Test 378 Checks. Rauchtest mit einem und zwei Spielern grün.
+  - Fahrbot-Frage des PO beantwortet: Der Fahrbot ist der automatische Testfahrer der CI. Im Spiel steckt
+    nur die FPS-Messrunde, versteckt hinter F3.

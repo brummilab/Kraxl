@@ -29,6 +29,8 @@ var tire_friction := 1.1
 var tracks := false
 var rolling_resistance := 0.03
 var color := Color(0.95, 0.55, 0.1)
+## Regenbogen-Lack (Farbe „regenbogen“): `color` ist dann nur die Symbolfarbe in der Garage.
+var rainbow := false
 
 
 static func from_design(design: CrawlerDesign) -> VehicleSpec:
@@ -93,4 +95,5 @@ static func from_design(design: CrawlerDesign) -> VehicleSpec:
 	s.tire_friction = tires.reibung
 	s.rolling_resistance = tires.rollwiderstand
 	s.color = design.get_part(&"farbe").farbe
+	s.rainbow = design.get_part(&"farbe").get("regenbogen", false)
 	return s

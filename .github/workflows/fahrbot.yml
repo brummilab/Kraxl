@@ -49,6 +49,9 @@ jobs:
       - name: Spielszene (Rauchtest, 5 s Fahrbot-Runde)
         run: timeout 120 "$GODOT" --headless --fixed-fps 60 res://scenes/spike/terrain_spike.tscn -- --benchmark-seconds=5
 
+      - name: Spielszene zu zweit (Rauchtest, geteilter Bildschirm)
+        run: timeout 120 "$GODOT" --headless --fixed-fps 60 res://scenes/spike/terrain_spike.tscn -- --benchmark-seconds=5 --spieler=2
+
       - name: Messwerte sichern
         if: always()
         uses: actions/upload-artifact@v4
@@ -98,6 +101,8 @@ jobs:
 
       - name: Import und Export
         run: |
+          # Versionsnummer für Spiel (F3-Anzeige) und Updater; bei jedem Lauf neu (ADR 0012).
+          echo "Build ${{ github.run_number }} ($(echo "$GITHUB_SHA" | cut -c1-7), $(date -u +%Y-%m-%d))" > data/version.txt
           "$GODOT" --headless --import --quit
           mkdir -p build/windows
           "$GODOT" --headless --export-release "Windows" build/windows/Kraxl.exe
@@ -105,6 +110,7 @@ jobs:
           test -s build/windows/libterrain.windows.release.x86_64.dll
           cp LICENSE THIRD_PARTY_NOTICES.md build/windows/
           cp tools/LIESMICH-windows.txt build/windows/LIESMICH.txt
+          cp tools/Kraxl-Update.cmd tools/Kraxl-Update.ps1 data/version.txt build/windows/
 
       - name: Exe bereitstellen
         uses: actions/upload-artifact@v4
@@ -112,3 +118,40 @@ jobs:
           name: Kraxl-windows-${{ github.sha }}
           path: build/windows/
           retention-days: 30
+
+  # Öffentliches Release für den Updater (Kraxl-Update.cmd neben der Exe lädt
+  # releases/latest/download/Kraxl-windows.zip). Nur bei Pushes auf main; die letzten 5 Builds bleiben.
+  release:
+    needs: windows-exe
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Kraxl-windows-${{ github.sha }}
+          path: Kraxl
+
+      - name: Release veröffentlichen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: build-${{ github.run_number }}
+        run: |
+          test -s Kraxl/Kraxl.exe
+          test -s Kraxl/version.txt
+          (cd Kraxl && zip -q -r ../Kraxl-windows.zip .)
+          sha256sum Kraxl-windows.zip > Kraxl-windows.zip.sha256
+          cp Kraxl/version.txt version.txt
+          gh release create "$TAG" Kraxl-windows.zip Kraxl-windows.zip.sha256 version.txt \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --latest \
+            --title "Kraxl $(cat version.txt)" \
+            --notes "Windows-Testversion. Installation: ZIP entpacken, Kraxl.exe starten. Update: Kraxl-Update.cmd im Spielordner doppelklicken."
+          # Aufräumen: nur die letzten 5 Builds behalten.
+          gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --json tagName --jq '.[].tagName' \
+            | grep '^build-' | sort -t- -k2 -n -r | tail -n +6 \
+            | xargs -r -I{} gh release delete {} --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes

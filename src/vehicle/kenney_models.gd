@@ -3,7 +3,9 @@ class_name KenneyModels
 ## Die Physik bleibt beim Bauplan (VehicleSpec); die Modelle werden nur auf unsere Achsen
 ## ausgerichtet und skaliert. Lackfarbe: Die Modelle nutzen eine gemeinsame Farbpalette
 ## (8 × 4 Kacheln mit Verlauf). Ein Shader färbt die vorherrschende bunte Kachel jedes Modells
-## in der gewählten Farbe ein und behält die Schattierung.
+## in der gewählten Farbe ein und behält die Schattierung. Die dunkelgrauen Zierteile (Stoßstangen,
+## Schweller) bekommen eine dunklere Variante des Lacks, die Felgen der Räder den Lack selbst –
+## so wirken die Fahrzeuge kräftig bunt statt grau (ADR 0012). Regenbogen-Lack siehe Paint.
 
 const DIR := "res://assets/models/kenney/"
 const COLORMAP := "res://assets/models/kenney/Textures/colormap.png"
@@ -25,6 +27,10 @@ const WHEELS := {
 	&"matsch": "wheel-tractor-back",
 }
 const GRID := Vector2(8, 4)
+## Dunkelgraue Kachel der Zierteile an Karosserien und helle Felgen-Kachel der Räder.
+const TRIM_TILE := Vector2i(3, 2)
+const RIM_TILE := Vector2i(6, 2)
+const TRIM_DARKEN := 0.45
 ## Bunte Palettenkacheln (Spalte, Zeile), die als Lack infrage kommen. Glas, Grau, Weiß, Schwarz
 ## und Hauttöne bleiben unverändert.
 const PAINTABLE := [
@@ -33,17 +39,25 @@ const PAINTABLE := [
 	Vector2i(7, 2),
 	Vector2i(1, 3), Vector2i(2, 3), Vector2i(3, 3), Vector2i(4, 3), Vector2i(5, 3), Vector2i(6, 3), Vector2i(7, 3),
 ]
-const PAINT_SHADER := """
-shader_type spatial;
+const PAINT_SHADER := "shader_type spatial;\n" + """
 uniform sampler2D colormap : source_color, filter_linear_mipmap;
 uniform vec3 paint : source_color = vec3(1.0, 0.5, 0.1);
+uniform vec3 trim : source_color = vec3(0.5, 0.25, 0.05);
 uniform vec2 tile = vec2(-1.0);
+uniform vec2 trim_tile = vec2(-1.0);
 uniform float tile_luminance = 0.5;
+uniform float trim_luminance = 0.5;
+uniform bool rainbow = false;
+""" + Paint.RAINBOW_GLSL + Paint.WORLD_POS_VERTEX + """
 void fragment() {
 	vec3 c = texture(colormap, UV).rgb;
-	if (floor(UV * vec2(8.0, 4.0)) == tile) {
-		float l = dot(c, vec3(0.299, 0.587, 0.114));
-		c = paint * clamp(l / max(tile_luminance, 0.05), 0.5, 1.5);
+	vec2 t = floor(UV * vec2(8.0, 4.0));
+	vec3 p = rainbow ? rainbow_at(world_pos) : paint;
+	float l = dot(c, vec3(0.299, 0.587, 0.114));
+	if (t == tile) {
+		c = p * clamp(l / max(tile_luminance, 0.05), 0.5, 1.5);
+	} else if (t == trim_tile) {
+		c = (rainbow ? p * 0.55 : trim) * clamp(l / max(trim_luminance, 0.05), 0.5, 1.5);
 	}
 	ALBEDO = c;
 	ROUGHNESS = 0.7;
@@ -72,8 +86,9 @@ static func instantiate(model: String) -> Node3D:
 	return _scenes[model].instantiate()
 
 
-## Material, das die vorherrschende bunte Kachel von `mesh` in `color` umfärbt.
-static func paint_material(mesh: Mesh, color: Color) -> ShaderMaterial:
+## Material, das die vorherrschende bunte Kachel von `mesh` in `color` umfärbt (bei Rädern die
+## Felge). Karosserien bekommen zusätzlich farbige Zierteile.
+static func paint_material(mesh: Mesh, color: Color, rainbow := false, wheel := false) -> ShaderMaterial:
 	if _shader == null:
 		_shader = Shader.new()
 		_shader.code = PAINT_SHADER
@@ -81,13 +96,18 @@ static func paint_material(mesh: Mesh, color: Color) -> ShaderMaterial:
 		_colormap_image = _colormap.get_image()
 		if _colormap_image.is_compressed():
 			_colormap_image.decompress()
-	var tile := dominant_tile(mesh)
+	var tile := RIM_TILE if wheel else dominant_tile(mesh)
+	var trim_tile := Vector2i(-1, -1) if wheel else TRIM_TILE
 	var material := ShaderMaterial.new()
 	material.shader = _shader
 	material.set_shader_parameter("colormap", _colormap)
 	material.set_shader_parameter("paint", color)
+	material.set_shader_parameter("trim", color.darkened(TRIM_DARKEN))
+	material.set_shader_parameter("rainbow", rainbow)
 	material.set_shader_parameter("tile", Vector2(tile) if tile.x >= 0 else Vector2(-1, -1))
 	material.set_shader_parameter("tile_luminance", _tile_luminance(tile))
+	material.set_shader_parameter("trim_tile", Vector2(trim_tile))
+	material.set_shader_parameter("trim_luminance", _tile_luminance(trim_tile))
 	return material
 
 

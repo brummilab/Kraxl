@@ -25,13 +25,13 @@ static func create(parent: Node, camera: Camera3D = null) -> Terrain3D:
 	if camera:
 		terrain.set_camera(camera)
 
-	terrain.material.world_background = Terrain3DMaterial.NONE
+	terrain.material.world_background = Terrain3DMaterial.FLAT  # Wiese bis zum Horizont statt Leere
 	terrain.material.auto_shader = true
 	terrain.material.set_shader_param("auto_slope", 10)
 	terrain.assets = Terrain3DAssets.new()
 	# Auto-Shader: Textur 1 auf flachem Boden, Textur 0 an steilen Hängen.
-	terrain.assets.set_texture(0, _texture_asset("Erde", Color.from_hsv(0.08, 0.45, 0.42)))
-	terrain.assets.set_texture(1, _texture_asset("Wiese", Color.from_hsv(0.31, 0.45, 0.45)))
+	terrain.assets.set_texture(0, _texture_asset("Erde", Color.from_hsv(0.07, 0.55, 0.55)))
+	terrain.assets.set_texture(1, _texture_asset("Wiese", Color.from_hsv(0.29, 0.58, 0.54)))
 
 	terrain.data.import_images([_height_map(), null, null], ORIGIN, 0.0, 1.0)
 	terrain.set_collision_mode(Terrain3DCollision.FULL_GAME)

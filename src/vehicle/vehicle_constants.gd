@@ -55,6 +55,11 @@ const LANDING_FULL_SPEED := 6.0  # m/s Fallgeschwindigkeit für volle Lautstärk
 # --- Werkzeug (Bagger, Radlader; nur Optik) ---
 const TOOL_SPEED := 1.5  # volle Bewegung pro Sekunde
 
+# --- Spielzeug in der Welt (bunte Kegel und Kisten zum Umschubsen, ADR 0012) ---
+const TOY_CONE_MASS := 4.0  # kg; leicht genug, dass jeder Crawler ihn wegschiebt
+const TOY_BOX_MASS := 10.0  # kg
+const TOY_FRICTION := 0.8
+
 # --- Abnahme-Metriken des Fahrbots ---
 const TARGET_HILL_ANGLE_DEG := 35.0
 const MAX_PARKED_DRIFT_M := 0.02  # in 10 s am 35°-Hang

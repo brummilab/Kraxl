@@ -25,3 +25,6 @@ Thumbs.db
 
 # Terrain3D wird per tools/fetch_terrain3d.(sh|ps1) gepinnt geladen
 addons/terrain_3d/
+
+# Versionsnummer schreibt die CI vor dem Export (ADR 0012)
+data/version.txt

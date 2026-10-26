@@ -42,6 +42,8 @@ Belegung in `src/input/kraxl_input.gd`, ausgelesen über `ActionInputSource` (ei
   „Fahrbot 5 min“ auslöst.
 
 - Seit ADR 0011 liegt die Hupe nur noch auf L3; R3 und der rechte Stick bedienen das Werkzeug.
+- Zwei Spieler (ADR 0012): Das erste angeschlossene Gamepad steuert Spieler 1, das zweite Spieler 2,
+  mit derselben Belegung. Tastatur: Spieler 1 WASD, Spieler 2 Pfeiltasten.
 
 ## 8BitDo USB Wireless Adapter 2
 

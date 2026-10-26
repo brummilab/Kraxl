@@ -93,6 +93,7 @@ func _build_wheels() -> void:
 		wheel.width = spec.wheel_width
 		wheel.travel = spec.travel
 		wheel.hub_color = spec.color
+		wheel.rainbow = spec.rainbow
 		wheel.tracks = spec.tracks
 		wheel.tire = design.choices[&"reifen"]
 		add_child(wheel)
@@ -138,6 +139,19 @@ func _physics_process(delta: float) -> void:
 	_update_righting(delta)
 	for wheel in wheels:
 		wheel.update_visual(-linear_velocity.dot(global_basis.z), delta)
+
+
+## Setzt das Fahrzeug ruhig an eine neue Stelle (z. B. zurück an den Start, wenn es aus der
+## Welt gefallen ist). Nur aus _physics_process aufrufen.
+func reset_to(where: Transform3D) -> void:
+	global_transform = where
+	linear_velocity = Vector3.ZERO
+	angular_velocity = Vector3.ZERO
+	_has_park_anchor = false
+	_righting = false
+	_tipped_time = 0.0
+	_air_time = 0.0
+	reset_physics_interpolation()
 
 
 ## Beim Einrasten der Parkbremse wird die Lage gemerkt. Wird das Fahrzeug weiter als

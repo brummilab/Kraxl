@@ -8,6 +8,8 @@ extends Control
 ## Sichtbar nur bei Touch: beim Start, wenn das Gerät einen Touchscreen hat, und nach jeder
 ## Berührung; Tastatur oder Gamepad blenden die Tasten aus (am PC stören sie sonst).
 ## Licht- und Werkzeug-Taste erscheinen nur, wenn das Fahrzeug Licht bzw. ein Werkzeug hat.
+## Im Zwei-Spieler-Modus bekommt jede Bildschirmhälfte eigene Tasten (`fill_parent = false`,
+## Anker setzt der Aufrufer); Berührungen in der anderen Hälfte gehören dem anderen Kind.
 
 const BUTTON_SIZE_MM := 25.0
 const EDGE_MARGIN_MM := 5.0
@@ -16,6 +18,8 @@ const GAP_MM := 4.0
 enum Action { STEER_LEFT, STEER_RIGHT, FORWARD, BACKWARD, HORN, LIGHT, TOOL }
 
 var source := TouchInputSource.new()
+## true: füllt den ganzen Bildschirm (Ein-Spieler). false: Anker und Größe setzt der Aufrufer.
+var fill_parent := true
 
 var _fingers := {}  # Finger-Index -> Action
 var _rects := {}  # Action -> Rect2
@@ -37,7 +41,8 @@ var _click: AudioStreamPlayer
 
 
 func _ready() -> void:
-	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	if fill_parent:
+		set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	resized.connect(_layout)
 	shown = DisplayServer.is_touchscreen_available()
@@ -60,7 +65,7 @@ func _input(event: InputEvent) -> void:
 		if event.pressed and not shown:
 			shown = true
 		if event.pressed:
-			var action: Variant = _action_at(event.position)
+			var action: Variant = _action_at(make_input_local(event).position)
 			if action != null:
 				_fingers[event.index] = action
 				_click.play()
@@ -92,6 +97,8 @@ func _layout() -> void:
 
 
 func _action_at(pos: Vector2) -> Variant:
+	if not Rect2(Vector2.ZERO, size).has_point(pos):
+		return null  # andere Bildschirmhälfte (Zwei-Spieler) oder außerhalb
 	for action in _rects:
 		if _rects[action].has_point(pos):
 			return action

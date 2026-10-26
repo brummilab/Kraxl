@@ -1,6 +1,13 @@
 KRAXL – Windows-Testversion (Spike-Stand)
 ==========================================
 
+Update
+------
+Kraxl-Update.cmd doppelklicken: holt die neueste Version von GitHub (Prüfsumme wird kontrolliert)
+und ersetzt die Dateien in diesem Ordner. Gebaute Crawler bleiben erhalten. Das Spiel selbst geht
+nie ins Internet – nur dieses Update-Skript, wenn ein Erwachsener es startet.
+Installierte Version: siehe version.txt (oder F3 im Spiel).
+
 Starten
 -------
 1. ZIP komplett entpacken (nicht direkt aus dem ZIP starten).
@@ -16,6 +23,19 @@ Gelände:        Pfeiltasten/WASD; Schraubenschlüssel = zurück in die Garage.
                 Die großen runden Tasten erscheinen nur auf Touch-Bildschirmen (Berührung blendet sie ein,
                 Tastatur oder Gamepad wieder aus).
                 L = Licht an/aus (Extra "Licht"), E = Bagger-Arm / Schaufel senken.
+
+Zwei Spieler
+------------
+Garage: Karte mit den Figuren antippen -> zwei Spieler. Die Helm-Karten (1 bzw. 2 Punkte) wählen,
+wessen Crawler gebaut wird. Im Gelände ist der Bildschirm geteilt:
+  Spieler 1 (links):  erstes Gamepad, WASD, Hupe Leertaste, Licht Q, Werkzeug E
+  Spieler 2 (rechts): zweites Gamepad, Pfeiltasten, Hupe Enter, Licht Ende, Werkzeug Bild ab
+
+Fahrbot
+-------
+Der Fahrbot ist ein automatischer Testfahrer für die Entwicklung. Er prüft bei jedem Update, dass kein
+Crawler am Hang rutscht oder liegen bleibt. Im Spiel steckt nur die Bildraten-Messung "Fahrbot 5 min"
+(F3), für Kinder unsichtbar.
 
 Gamepad (8BitDo SN30 Pro, direkt oder über den 8BitDo USB Wireless Adapter 2):
   Vorwärts   A oder B, R, R2        Rückwärts  X oder Y, L, L2

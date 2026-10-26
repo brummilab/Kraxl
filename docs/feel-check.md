@@ -28,6 +28,11 @@ auf dem Android-Zielgerät (ADR 0004) im Modus „Kleine Hände“.
 | 19 | Licht-Taste (Start / L / Lampen-Taste) schaltet zuverlässig einmal pro Druck | ☐ | |
 | 20 | Auspuffrauch: sichtbar, mehr bei Gas, nicht störend | ☐ | |
 | 21 | PC: keine großen Pfeil-Tasten mit Tastatur/Gamepad; auf dem Tablet sind sie da | ☐ | |
+| 22 | Zwei Spieler: Garage-Umschalter verständlich, jedes Kind findet „seinen“ Helm | ☐ | |
+| 23 | Zwei Spieler: geteilter Bildschirm, jedes Gamepad steuert nur seinen Crawler | ☐ | |
+| 24 | Farben: Regenbogen-Lack, neue Farben, bunte Welt gefallen; nichts zu grell | ☐ | |
+| 25 | Weltrand: Zaun hält auf, nie ins Leere gefallen | ☐ | |
+| 26 | Kraxl-Update.cmd: holt neue Version, Crawler bleiben gespeichert | ☐ | |
 
 **Gesamturteil:** ☐ Fühlt sich gut an – Merge freigegeben  ☐ Nachbessern
 

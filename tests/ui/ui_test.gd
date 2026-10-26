@@ -26,6 +26,7 @@ func _ready() -> void:
 	await _test_garage()
 	await _test_sounds()
 	await _test_models_and_tools()
+	await _test_two_players_and_colors()
 
 	for e in _logger.errors:
 		_failures.append("Skriptfehler: " + e)
@@ -242,6 +243,7 @@ func _test_sounds() -> void:
 	var layer := CanvasLayer.new()
 	add_child(layer)
 	layer.add_child(touch)
+	touch.size = Vector2(1280, 720)  # Testfenster ist nur 64 × 64; Tasten müssen im Feld liegen
 	await get_tree().process_frame
 	var horn_rect: Rect2 = touch._rects[TouchControls.Action.HORN]
 	var press := InputEventScreenTouch.new()
@@ -431,3 +433,135 @@ func _test_garage() -> void:
 		await get_tree().physics_frame
 	_check(garage.vehicle.global_position.y > 0.0, "Crawler fällt nicht durch den Garagenboden")
 	garage.queue_free()
+
+
+# --- Zwei Spieler, Farben, Weltrand, Spielwelt (ADR 0012) ---------------------
+
+
+func _key(code: Key, pressed: bool) -> void:
+	var e := InputEventKey.new()
+	e.physical_keycode = code
+	e.pressed = pressed
+	Input.parse_input_event(e)
+	Input.flush_buffered_events()
+
+
+func _test_two_players_and_colors() -> void:
+	# Eingabe je Spieler: WASD gehört Spieler 1, Pfeiltasten Spieler 2.
+	var p1 := ActionInputSource.new(0)
+	var p2 := ActionInputSource.new(1)
+	_key(KEY_W, true)
+	p1.update(0.0)
+	p2.update(0.0)
+	_check(p1.throttle == 1.0 and p2.throttle == 0.0, "W fährt nur Spieler 1")
+	_key(KEY_W, false)
+	_key(KEY_UP, true)
+	p1.update(0.0)
+	p2.update(0.0)
+	_check(p1.throttle == 0.0 and p2.throttle == 1.0, "Pfeil hoch fährt nur Spieler 2")
+	_key(KEY_UP, false)
+	_key(KEY_ENTER, true)
+	p2.update(0.0)
+	_check(p2.horn, "Enter hupt bei Spieler 2")
+	_key(KEY_ENTER, false)
+	_press_button(JOY_BUTTON_A, true, 0)
+	_check(KraxlInput.pad_strength(KraxlInput.FORWARD, 0) == 1.0, "Pad 0: A gibt Gas")
+	_check(KraxlInput.pad_strength(KraxlInput.FORWARD, 1) == 0.0, "Pad 1 bleibt unberührt")
+	_press_button(JOY_BUTTON_A, false, 0)
+	_check(KraxlInput.pad_strength(KraxlInput.FORWARD, -1) == 0.0, "Ohne zweites Gamepad kein Gas")
+
+	# Touch: jede Bildschirmhälfte hat eigene Tasten.
+	var layer := CanvasLayer.new()
+	add_child(layer)
+	var halves: Array[TouchControls] = []
+	for i in 2:
+		var t := TouchControls.new()
+		t.fill_parent = false
+		layer.add_child(t)
+		t.position = Vector2(640 * i, 0)  # wie die Anker im Spiel, aber unabhängig vom Testfenster
+		t.size = Vector2(640, 720)
+		halves.append(t)
+	await get_tree().process_frame
+	var right := halves[1]
+	var fwd: Rect2 = right._rects[TouchControls.Action.FORWARD]
+	var tap := InputEventScreenTouch.new()
+	tap.index = 7
+	tap.pressed = true
+	tap.position = right.get_global_rect().position + fwd.get_center()
+	for t in halves:
+		t._input(tap)
+	_check(right.source.throttle == 1.0, "Rechte Hälfte: Vorwärts-Taste gibt Gas")
+	_check(halves[0].source.throttle == 0.0, "Linke Hälfte bleibt unberührt")
+	var lift := InputEventScreenTouch.new()
+	lift.index = 7
+	lift.position = tap.position
+	for t in halves:
+		t._input(lift)
+	layer.queue_free()
+
+	# Spielerzahl und Baupläne je Spieler.
+	GameState.set_player_count(2)
+	GameState.forget()
+	_check(GameState.player_count() == 2, "Spielerzahl wird gespeichert")
+	var garage: Node = load("res://scenes/garage/garage.tscn").instantiate()
+	add_child(garage)
+	await get_tree().process_frame
+	_check(garage._player_cards[1].visible, "Zwei Spieler: Helm-Karten sichtbar")
+	garage.select_player(1)
+	garage.design.select(&"farbe", &"regenbogen")
+	GameState.set_design(garage.design, 1)
+	garage.select_player(0)
+	_check(GameState.design(1).choices[&"farbe"] == &"regenbogen", "Spieler 2 hat eigenen Bauplan")
+	_check(garage.design.choices[&"farbe"] != &"regenbogen" or GameState.design(0).choices[&"farbe"] == &"regenbogen",
+		"Spieler 1 behält seinen Bauplan")
+	garage.toggle_players()
+	_check(GameState.player_count() == 1 and not garage._player_cards[1].visible, "Zurück auf einen Spieler")
+	garage.show_category(&"farbe")
+	await get_tree().process_frame
+	_check(garage._part_rows.get_child_count() == 2, "Viele Farben stehen in zwei Reihen")
+	_check(garage._part_cards.size() == PartCatalog.parts(&"farbe").size(), "Alle Farben sind wählbar")
+	garage.queue_free()
+	await get_tree().process_frame
+
+	# Regenbogen-Lack und kräftige Zierteile.
+	var stage := Node3D.new()
+	add_child(stage)
+	var floor_body := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	shape.shape = WorldBoundaryShape3D.new()
+	floor_body.add_child(shape)
+	stage.add_child(floor_body)
+	for body in [&"jeep", &"buggy"]:
+		var d := CrawlerDesign.new()
+		d.choices[&"aufbau"] = body
+		d.choices[&"farbe"] = &"regenbogen"
+		var v := KraxlVehicle.new()
+		v.design = d
+		v.position = Vector3(0, 1.2, 0)
+		stage.add_child(v)
+		_check(v.spec.rainbow, "%s: Regenbogen-Lack erkannt" % body)
+		var painted := v.find_children("*", "MeshInstance3D", true, false).filter(func(m):
+			var mat: Material = m.material_override if m.material_override else (m.mesh.surface_get_material(0) if m.mesh else null)
+			return mat is ShaderMaterial and (mat == Paint.solid(Color.WHITE, true) or mat.get_shader_parameter("rainbow") == true))
+		_check(not painted.is_empty(), "%s: Teile tragen den Regenbogen-Shader" % body)
+		v.queue_free()
+	var red := KenneyModels.paint_material(KenneyModels.wheel_mesh(&"stollen").mesh, Color.RED, false, true)
+	_check(red.get_shader_parameter("tile") == Vector2(KenneyModels.RIM_TILE), "Felgen werden lackiert")
+
+	# Weltrand: draußen oder unter dem Boden = zurück an den Start.
+	_check(not WorldBorder.is_lost(SpikeTerrain.CENTER + Vector3.UP), "Mitte ist im Spiel")
+	_check(WorldBorder.is_lost(Vector3(-1, 5, 128)), "Links außerhalb = verloren")
+	_check(WorldBorder.is_lost(Vector3(128, -20, 128)), "Unter dem Boden = verloren")
+	var border := WorldBorder.new()
+	stage.add_child(border)
+	_check(border.get_child_count() == 5, "Weltrand: 4 Wände und ein Zaun")
+
+	# Spielwelt: Blumen und umschubsbares Spielzeug.
+	var playground := Playground.new()
+	stage.add_child(playground)
+	var flowers: MultiMeshInstance3D = playground.get_node("Blumen")
+	_check(flowers.multimesh.instance_count == Playground.FLOWER_COUNT, "Blumenwiese steht")
+	var toys := playground.get_children().filter(func(c): return c is RigidBody3D)
+	_check(toys.size() >= 20, "Bunte Kegel und Kisten stehen")
+	stage.queue_free()
+	await get_tree().process_frame

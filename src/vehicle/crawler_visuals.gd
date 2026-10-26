@@ -13,7 +13,7 @@ const LAMP := Color(1.0, 0.95, 0.6)
 ##  "exhausts": [Transform3D]} – Auspufföffnungen, -Z zeigt in Austrittsrichtung (für den Rauch).
 static func build(root: Node3D, spec: VehicleSpec, design: CrawlerDesign) -> Dictionary:
 	var parts := {"lights": [], "lamps": [], "tool": {}, "exhausts": []}
-	var paint := _material(spec.color)
+	var paint := Paint.solid(spec.color, spec.rainbow)
 	var dark := _material(DARK)
 	var b := spec.body_size
 	var top := b.y * 0.5
@@ -139,7 +139,7 @@ static func _kenney_body(root: Node3D, spec: VehicleSpec, model: String, parts: 
 	body.owner = null
 	holder.add_child(body)
 	scene.free()
-	_paint_recursive(body, spec.color)
+	_paint_recursive(body, spec.color, spec.rainbow)
 
 	var aabb := body.get_aabb()
 	var bottom := holder.position.y + (body.position.y + aabb.position.y) * sy
@@ -157,11 +157,11 @@ static func _kenney_body(root: Node3D, spec: VehicleSpec, model: String, parts: 
 	return fit
 
 
-static func _paint_recursive(node: Node, color: Color) -> void:
+static func _paint_recursive(node: Node, color: Color, rainbow: bool) -> void:
 	if node is MeshInstance3D:
-		node.material_override = KenneyModels.paint_material(node.mesh, color)
+		node.material_override = KenneyModels.paint_material(node.mesh, color, rainbow)
 	for child in node.get_children():
-		_paint_recursive(child, color)
+		_paint_recursive(child, color, rainbow)
 
 
 static func _dump_box(root: Node3D, b: Vector3, fit: Dictionary, metal: Material) -> void:
