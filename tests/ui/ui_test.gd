@@ -57,6 +57,20 @@ func _test_gamepad() -> void:
 	_check(_with_axis(source, JOY_AXIS_LEFT_X, 0.8).steer > 0.6, "Stick rechts lenkt")
 	_check(_with_axis(source, JOY_AXIS_LEFT_X, 0.2).steer == 0.0, "Stick-Totzone schluckt Zittern")
 
+	# Zweiter Controller (z. B. Adapter + Bluetooth-Pad gleichzeitig) wirkt genauso.
+	_press_button(JOY_BUTTON_A, true, 3)
+	source.update(0.0)
+	_check(source.throttle == 1.0, "Zweiter Controller (Gerät 3) fährt auch")
+	_press_button(JOY_BUTTON_A, false, 3)
+
+	_check(KraxlInput.describe_joypads() == "kein Gamepad", "Statuszeile ohne Controller")
+	var mapping_file := "user://test_mappings.txt"
+	var f := FileAccess.open(mapping_file, FileAccess.WRITE)
+	f.store_string("# Kommentar\n\n" + "030000000000000000000000000000ff,Kraxl Testpad,a:b0,b:b1,x:b2,y:b3,platform:Linux\n")
+	f.close()
+	_check(KraxlInput.load_extra_mappings(mapping_file) == 1, "Zusatz-Mappings werden geladen (Kommentare ignoriert)")
+	_check(KraxlInput.load_extra_mappings(KraxlInput.EXTRA_MAPPINGS) == 0, "Mitgelieferte Zusatzdatei ist gültig")
+
 	_press_button(JOY_BUTTON_BACK, true)
 	_check(Input.is_action_pressed(KraxlInput.GARAGE), "Select öffnet die Garage")
 	_press_button(JOY_BUTTON_BACK, false)
@@ -99,9 +113,9 @@ func _with_axis(source: ActionInputSource, axis: JoyAxis, value: float) -> Actio
 	return copy
 
 
-func _press_button(button: JoyButton, pressed: bool) -> void:
+func _press_button(button: JoyButton, pressed: bool, device := 0) -> void:
 	var e := InputEventJoypadButton.new()
-	e.device = 0
+	e.device = device
 	e.button_index = button
 	e.pressed = pressed
 	e.pressure = 1.0 if pressed else 0.0

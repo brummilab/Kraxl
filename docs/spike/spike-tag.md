@@ -50,7 +50,7 @@ Getestet mit Godot 4.7.2-stable (Linux) und Terrain3D 1.0.2-stable:
 | 4 | Android: läuft es? | 45 min | Gerät per USB, im Editor oben rechts *Remote Debug / Ein-Klick-Deploy* auf Android | Spike-Szene startet, Statuszeile zeigt `mobile` und die echte GPU, Steuerung per Touch funktioniert |
 | 5 | Android: 5-min-Runde | 15 min | Knopf **„Fahrbot 5 min“** oben rechts, Gerät nicht anfassen. Ergebnis steht am Bildschirm und im Ausgabe-Panel (`[Spike] …`) | **1%-Low ≥ 30 fps** |
 | 6 | Berechtigungs-Gate | 15 min | *Projekt → Exportieren → Android → Projekt exportieren* (Debug) nach `build/android/Kraxl.apk`, dann `.\tools\check_apk_permissions.ps1 build\android\Kraxl.apk` | „OK: … verlangt keine Berechtigungen“ |
-| 7 | Gamepad | 15 min | 8BitDo SN30 Pro am PC (Start + X, X-Input) und am Android-Gerät (Bluetooth, Start + B): Prüfliste aus [ADR 0009](../decisions/0009-gamepad-8bitdo.md) | Alle Zeilen der Belegungstabelle funktionieren |
+| 7 | Gamepad | 20 min | 8BitDo SN30 Pro direkt (PC: Start + X; Android: Bluetooth, Start + B) **und** über den USB Wireless Adapter 2 (PC: USB; Android: OTG-Kabel). Prüfliste aus [ADR 0009](../decisions/0009-gamepad-8bitdo.md) | Statuszeile zeigt „bekannt“, alle Zeilen der Belegungstabelle funktionieren |
 | 8 | Entscheidung | 15 min | Protokoll ausfüllen, ADR 0001 aktualisieren | – |
 
 Hinweis zu Block 6: Nicht das APK aus dem Ein-Klick-Deploy prüfen. Für Remote-Debugging fügt Godot
@@ -91,6 +91,7 @@ absichtlich `INTERNET` hinzu.
 | 5-min-Runde Ø / 1%-Low / Min fps | | |
 | APK ohne Berechtigungen | – | ☐ |
 | 8BitDo SN30 Pro (Modus) | | |
+| 8BitDo Adapter 2 (Statuszeile: bekannt? GUID) | | |
 | Auffälligkeiten | | |
 
 **Entscheidung:** ☐ 4.7.2 + Terrain3D 1.0.2  ☐ Rückfall 4.6.3  ☐ Terrain3D 1.1.x prüfen

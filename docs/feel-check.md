@@ -21,6 +21,7 @@ auf dem Android-Zielgerät (ADR 0004) im Modus „Kleine Hände“.
 | 12 | Garage: jede Vorlage fährt sich erkennbar anders (Ketten langsam, Monster hoch, 6×6 stabil) | ☐ | |
 | 13 | 8BitDo SN30 Pro: rechte Knöpfe = vor, linke = zurück, Steuerkreuz lenkt, Select = Garage | ☐ | |
 | 14 | 8BitDo SN30 Pro: Garage komplett mit Steuerkreuz + rechten Knöpfen bedienbar, Start = losfahren | ☐ | |
+| 15 | Über den 8BitDo USB Wireless Adapter 2 (PC und Handy per OTG) funktioniert alles wie direkt | ☐ | |
 
 **Gesamturteil:** ☐ Fühlt sich gut an – Merge freigegeben  ☐ Nachbessern
 

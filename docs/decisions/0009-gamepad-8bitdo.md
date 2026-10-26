@@ -1,4 +1,4 @@
-# ADR 0009 – Gamepad-Unterstützung (8BitDo SN30 Pro)
+# ADR 0009 – Gamepad-Unterstützung (8BitDo SN30 Pro, USB Wireless Adapter 2)
 
 **Status:** angenommen – im Code und per Test abgesichert, Test mit echtem Controller offen
 **Datum:** 2026-10-26
@@ -38,6 +38,31 @@ Belegung in `src/input/kraxl_input.gd`, ausgelesen über `ActionInputSource` (ei
 - Knöpfe in der Spielszene haben `focus_mode = NONE`, damit der Gas-Knopf nicht versehentlich
   „Fahrbot 5 min“ auslöst.
 
+## 8BitDo USB Wireless Adapter 2
+
+Der Adapter (USB-Dongle, am Handy per OTG-Kabel) koppelt einen Controller per Bluetooth: SN30 Pro,
+Xbox-, PlayStation- oder Switch-Pro-Controller. Er meldet sich dann selbst als Gamepad. Abdeckung in
+Godot 4.7.2 (geprüft in `core/input/gamecontrollerdb.txt`, Tag 4.7.2-stable):
+
+| System / Modus | Eintrag in Godots Datenbank |
+|---|---|
+| Windows, X-Input (Standard des Adapters) | allgemeiner XInput-Controller |
+| Windows, D-Input | „8BitDo Adapter 2“ (`03000000c82d00000531…`) |
+| macOS | „8BitDo Adapter 2“ |
+| Linux | „8BitDo Adapter 2“ (`03000000c82d00000631…`) |
+| Android (OTG) | „8BitDo Adapter 2“ |
+
+- Auch der Adapter meldet je nach Modus A/B vertauscht; die Knopf-Paare decken das ab.
+- Android braucht für einen USB- oder Bluetooth-Controller **keine** App-Berechtigung, weil das System ihn
+  als Eingabegerät einbindet. Das APK bleibt ohne `uses-permission`.
+- **Absicherung gegen unbekannte Firmware-IDs:**
+  - Die Statuszeile im Spiel und das Log (`[Gamepad] verbunden: …`) zeigen Name, bekannt/UNBEKANNT und GUID.
+  - Für ein unbekanntes Gerät eine SDL-Mapping-Zeile in `data/gamecontrollerdb_extra.txt` eintragen; sie
+    wird beim Start geladen (`KraxlInput.load_extra_mappings`).
+  - Die Datei ist per `include_filter` in beiden Export-Presets enthalten.
+- Mehrere Controller gleichzeitig (Adapter + Bluetooth-Pad) steuern dasselbe Fahrzeug (Actions mit
+  `device = -1`).
+
 ## Tests
 
 `tests/ui/ui_test.tscn` speist Gamepad-Events ein und prüft:
@@ -51,5 +76,9 @@ Der Test schlägt bei jedem Skriptfehler fehl (Logger-API).
 
 1. Windows, X-Input (Start + X): alle Zeilen der Tabelle oben.
 2. Android, Bluetooth (Start + B koppeln): dasselbe.
-3. Falls ein Knopf nichts tut: Firmware des Controllers aktualisieren (8BitDo Ultimate Software). Alte
+3. 8BitDo USB Wireless Adapter 2 am PC (USB) und am Android-Gerät (OTG-Kabel), jeweils mit dem SN30 Pro
+   gekoppelt. Die Statuszeile muss „bekannt“ zeigen; dann die Belegungstabelle durchgehen.
+4. Falls ein Knopf nichts tut: Firmware des Controllers aktualisieren (8BitDo Ultimate Software). Alte
    Firmware hat laut Moonlight-Issue #978 falsche Mappings. Danach neu koppeln.
+5. Zeigt die Statuszeile „UNBEKANNT“: GUID notieren und eine Mapping-Zeile in
+   `data/gamecontrollerdb_extra.txt` ergänzen (siehe Kopf der Datei).

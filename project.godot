@@ -9,6 +9,7 @@ config/name="Kraxl"
 config/description="Offline-Sandkasten-Fahrspiel für Kinder ab 4."
 config/features=PackedStringArray("4.7", "Mobile")
 run/main_scene="res://scenes/garage/garage.tscn"
+config/icon="res://icon.svg"
 
 [display]
 

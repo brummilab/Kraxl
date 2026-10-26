@@ -56,9 +56,9 @@ Messung vom 26.10.2026 (Details in ADR 0002/0008):
 - [ ] Touch-Steuerung ausbauen: Handballen-Erkennung am Rand, Lenkhilfe, Linkshänder-Modus
 - [x] Crawler-Baukasten mit Garage, 46 Teilen, 6 Vorlagen, Baukasten-Matrix im Fahrbot (ADR 0008)
 - [x] Gamepad-Unterstützung 8BitDo SN30 Pro inkl. Garagen-Navigation (ADR 0009)
-- [ ] 8BitDo SN30 Pro am Spike-Tag mit echtem Gerät prüfen (Windows + Android)
+- [ ] 8BitDo SN30 Pro am Spike-Tag mit echtem Gerät prüfen (Windows + Android), direkt und über USB Wireless Adapter 2
+- [x] Logo und App-Symbol (`icon.svg`, `docs/logo/`)
 - [ ] Garage: mehrere Stellplätze; echte Modelle statt Grundformen (M7 / Kenney Car Kit, CC0)
-- [ ] GitHub Actions: Job bekommt keinen Runner (Repo-/Konto-Einstellungen prüfen)
 - [ ] Release-Keystore erzeugen, offline sichern, als CI-Secret hinterlegen
 - [ ] Zustimmung beider Elternteile für Kinderzeichnungen schriftlich einholen
 
@@ -87,3 +87,12 @@ Messung vom 26.10.2026 (Details in ADR 0002/0008):
   - 8BitDo SN30 Pro mit Knopf-Paaren gegen den A/B-Tausch. Godot 4.7 belegt Menüs nicht mit Gamepad-Knöpfen,
     das ist jetzt ergänzt. UI-Test mit 208 Checks und Skriptfehler-Zähler.
   - CI ohne `--quit-after`: das hätte unvollständige Läufe grün gemeldet.
+  - Erster CI-Lauf auf GitHub grün. Der Fehlschlag vom 25.10. (kein Runner zugewiesen) war vorübergehend.
+- **2026-10-26** – Logo und 8BitDo USB Wireless Adapter 2:
+  - Logo: orangefarbener Crawler kraxelt einen Felshang hinauf. Schriftzug „Kraxl“ mit orangem x,
+    Unterzeile „kraxeln · bauen · losfahren“, Varianten für hell und dunkel.
+  - Das Logo ist gleichzeitig das App-Symbol und wird reproduzierbar per Skript erzeugt.
+  - Adapter 2: Godot 4.7.2 kennt ihn bereits auf Windows, macOS, Linux und Android (OTG).
+  - Absicherung gegen unbekannte Firmware: Controller-Statuszeile mit GUID und
+    `data/gamecontrollerdb_extra.txt`.
+  - UI-Test: 212 Checks.

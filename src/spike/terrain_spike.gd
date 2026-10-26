@@ -129,13 +129,14 @@ func _finish_benchmark() -> void:
 	]
 	print("[Spike] ", _result_text)
 	print("[Spike] ", _system_info().replace("\n", " | "))
+	print("[Spike] ", KraxlInput.describe_joypads())
 	var args := Array(OS.get_cmdline_user_args())
 	if "--benchmark" in args or args.any(func(a): return a.begins_with("--benchmark-seconds=")):
 		get_tree().quit(0 if ok else 1)
 
 
 func _update_hud() -> void:
-	var text := "%d fps\n%s" % [Engine.get_frames_per_second(), _system_info()]
+	var text := "%d fps\n%s\n%s" % [Engine.get_frames_per_second(), _system_info(), KraxlInput.describe_joypads()]
 	if _bench_running:
 		text += "\nFahrbot: %d / %d s" % [_bench_time, _benchmark_seconds]
 	if _result_text:

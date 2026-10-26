@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/logo/kraxl-logo-dark.svg">
+    <img src="docs/logo/kraxl-logo.svg" alt="Kraxl – kraxeln, bauen, losfahren" width="520">
+  </picture>
+</p>
+
 # Kraxl
 
 Offline-Sandkasten-Fahrspiel für Kinder ab 4 Jahren (Windows + Android), gebaut mit Godot.
@@ -36,6 +43,7 @@ docs/
   decisions/                        Architekturentscheidungen (ADRs)
   spike/spike-tag.md                Ablauf und Messprotokoll für den Spike-Tag
   referenzen.md                     Vorbilder: GitHub-Projekte, echte RC-Crawler
+  logo/                             Logo (SVG + PNG, hell/dunkel); Quelle: tools/logo/build_logo.py
   feel-check.md                     Checkliste für die Probefahrt des Product Owners
   dependencies.md                   Abhängigkeiten inkl. Prüfung „sammelt Daten?“
 assets/                             eigene Assets (CC BY 4.0), Kinderzeichnungen, Herkunftsliste
@@ -51,7 +59,9 @@ src/
   spike/terrain_spike.gd            Spike-Szene inkl. 5-min-Fahrbot-Runde
 tests/fahrbot/                      Physik-Szenarien + Baukasten-Matrix (headless, CI)
 tests/ui/                           Garage, Bauplan, Gamepad-Belegung (headless, CI)
-tools/                              Terrain3D laden, APK-Berechtigungen prüfen
+tools/                              Terrain3D laden, APK-Berechtigungen prüfen, Logo erzeugen
+data/gamecontrollerdb_extra.txt     zusätzliche Controller-Mappings (wird mit exportiert)
+icon.svg                            App-Symbol (Godot, Windows, Android)
 scripts/hooks/pre-commit            Schutz für Kinderbeiträge
 .github/workflows/fahrbot.yml       CI: Import + Fahrbot + UI-Test
 CLAUDE.md                           nicht verhandelbare Regeln für Agenten
@@ -72,7 +82,7 @@ Dann das Projekt mit Godot 4.7.2-stable öffnen. **F5** startet die **Garage**:
 - Im Gelände: Pfeiltasten/WASD, Touch-Tasten oder Gamepad; Schraubenschlüssel bzw. Select führt zurück in die Garage.
 - Der Knopf „Fahrbot 5 min“ startet die FPS-Messrunde.
 
-## Gamepad (8BitDo SN30 Pro)
+## Gamepad (8BitDo SN30 Pro, auch über USB Wireless Adapter 2)
 
 | Aktion | Knöpfe |
 |---|---|
@@ -84,6 +94,9 @@ Dann das Projekt mit Godot 4.7.2-stable öffnen. **F5** startet die **Garage**:
 A/B bzw. X/Y sind absichtlich doppelt belegt, weil der Controller je nach Modus vertauscht meldet
 (Details: [ADR 0009](docs/decisions/0009-gamepad-8bitdo.md)). Windows: Start + X (X-Input);
 Android: über Bluetooth koppeln (Start + B).
+Der **8BitDo USB Wireless Adapter 2** funktioniert am PC per USB und am Handy per OTG-Kabel, ohne
+App-Berechtigung. Die Statuszeile im Spiel zeigt jeden angeschlossenen Controller mit „bekannt/UNBEKANNT“.
+Für unbekannte Geräte gibt es `data/gamecontrollerdb_extra.txt`.
 
 ## Fahrbot (Physik-Tests)
 

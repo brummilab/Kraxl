@@ -1,0 +1,7 @@
+# Zusätzliche Controller-Mappings für Kraxl (ADR 0009), Format wie SDL gamecontrollerdb.txt:
+#   GUID,Name,a:b0,b:b1,...,platform:Windows
+# Godot 4.7.2 kennt bereits: 8BitDo SN30 Pro (alle Modi), 8BitDo Adapter 2 (Windows, macOS, Linux,
+# Android) und jeden X-Input-Controller. Hier nur Geräte eintragen, die im Spiel als „unbekannt“
+# angezeigt werden (Statuszeile unten links: Name, GUID). Mapping erstellen z. B. mit dem
+# „SDL2 Gamepad Tool“ (generalarcade.com) und die Zeile unverändert einfügen.
+# Leerzeilen und Zeilen mit # werden ignoriert.

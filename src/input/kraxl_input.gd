@@ -9,6 +9,10 @@ class_name KraxlInput
 ##   Steuerkreuz und linker Stick                 -> lenken
 ##   Select                                       -> zurück in die Garage
 ## Keine Vibration: Auf Android braucht sie die VIBRATE-Berechtigung (ADR 0007: keine Berechtigungen).
+##
+## Der 8BitDo USB Wireless Adapter 2 (auch per OTG am Handy) meldet sich je nach Modus als X-Input-
+## Controller oder als „8BitDo Adapter 2“ – beides kennt Godot 4.7.2. Für unbekannte Geräte gibt es
+## data/gamecontrollerdb_extra.txt.
 
 const FORWARD := &"kraxl_vor"
 const BACKWARD := &"kraxl_zurueck"
@@ -16,12 +20,16 @@ const LEFT := &"kraxl_links"
 const RIGHT := &"kraxl_rechts"
 const GARAGE := &"kraxl_garage"
 const STICK_DEADZONE := 0.3
+const EXTRA_MAPPINGS := "res://data/gamecontrollerdb_extra.txt"
 
 
 ## Registriert die Actions einmalig. Idempotent, darf von jeder Szene aufgerufen werden.
 static func setup() -> void:
 	if InputMap.has_action(FORWARD):
 		return
+	load_extra_mappings(EXTRA_MAPPINGS)
+	Input.joy_connection_changed.connect(func(device: int, connected: bool):
+		print("[Gamepad] %s: %s" % ["verbunden" if connected else "getrennt", describe_joypad(device)]))
 	_add(FORWARD, [KEY_UP, KEY_W], [JOY_BUTTON_A, JOY_BUTTON_B, JOY_BUTTON_RIGHT_SHOULDER], [[JOY_AXIS_TRIGGER_RIGHT, 1.0]])
 	_add(BACKWARD, [KEY_DOWN, KEY_S], [JOY_BUTTON_X, JOY_BUTTON_Y, JOY_BUTTON_LEFT_SHOULDER], [[JOY_AXIS_TRIGGER_LEFT, 1.0]])
 	_add(LEFT, [KEY_LEFT, KEY_A], [JOY_BUTTON_DPAD_LEFT], [[JOY_AXIS_LEFT_X, -1.0]])
@@ -35,6 +43,33 @@ static func setup() -> void:
 	_add_joy(&"ui_right", [JOY_BUTTON_DPAD_RIGHT], [[JOY_AXIS_LEFT_X, 1.0]])
 	_add_joy(&"ui_up", [JOY_BUTTON_DPAD_UP], [[JOY_AXIS_LEFT_Y, -1.0]])
 	_add_joy(&"ui_down", [JOY_BUTTON_DPAD_DOWN], [[JOY_AXIS_LEFT_Y, 1.0]])
+
+
+## Lädt zusätzliche SDL-Mappings (eine Zeile pro Controller). Gibt die Zahl der Einträge zurück.
+static func load_extra_mappings(path: String) -> int:
+	if not FileAccess.file_exists(path):
+		return 0
+	var count := 0
+	for line in FileAccess.get_file_as_string(path).split("\n"):
+		line = line.strip_edges()
+		if line.is_empty() or line.begins_with("#"):
+			continue
+		Input.add_joy_mapping(line, true)
+		count += 1
+	return count
+
+
+## „Name (bekannt|unbekannt, GUID …)“ – für Statuszeile und Log, damit fehlende Mappings auffallen.
+static func describe_joypad(device: int) -> String:
+	var known := "bekannt" if Input.is_joy_known(device) else "UNBEKANNT"
+	return "%s (%s, GUID %s)" % [Input.get_joy_name(device), known, Input.get_joy_guid(device)]
+
+
+static func describe_joypads() -> String:
+	var pads := Input.get_connected_joypads()
+	if pads.is_empty():
+		return "kein Gamepad"
+	return " | ".join(pads.map(func(d): return describe_joypad(d)))
 
 
 static func _add(action: StringName, keys: Array, buttons: Array, axes: Array) -> void:

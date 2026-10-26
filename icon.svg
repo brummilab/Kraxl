@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>Kraxl</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5CC6F2"/>
+      <stop offset="1" stop-color="#BDEBFF"/>
+    </linearGradient>
+    <clipPath id="badge"><rect width="512" height="512" rx="112"/></clipPath>
+  </defs>
+  <g clip-path="url(#badge)">
+    <rect width="512" height="512" fill="url(#sky)"/>
+    <circle cx="112" cy="104" r="46" fill="#FFD84D"/>
+    <circle cx="112" cy="104" r="64" fill="#FFD84D" opacity="0.25"/>
+    <!-- ferne Berge -->
+    <path d="M -10 330 L 120 210 L 210 290 L 300 190 L 420 300 L 530 230 L 530 520 L -10 520 Z" fill="#9CC3DA"/>
+    <path d="M 300 190 L 330 218 L 312 222 L 300 210 L 286 226 L 272 220 Z" fill="#FFFFFF" opacity="0.9"/>
+    <!-- Fels-Hang, den der Crawler hinaufkraxelt: Linie durch beide Radaufstandspunkte (24°) -->
+    <path d="M -10 508 L 420 317 L 530 300 L 530 520 L -10 520 Z" fill="#8C7262"/>
+    <path d="M -10 508 L 420 317 L 444 336 L 20 524 Z" fill="#A58A78"/>
+    <path d="M 420 317 L 530 300 L 530 330 L 444 336 Z" fill="#B79E8C"/>
+    <circle cx="300" cy="420" r="16" fill="#7A6152"/>
+    <circle cx="400" cy="460" r="22" fill="#7A6152"/>
+    <!-- Wiese unten links -->
+    <path d="M -10 520 L -10 500 C 30 488 70 476 110 472 L 170 520 Z" fill="#5DBB4A"/>
+    <!-- Gipfelfahne -->
+    <rect x="458" y="232" width="7" height="84" rx="3" fill="#E9EEF3"/>
+    <path d="M 465 236 L 500 249 L 465 263 Z" fill="#FFD84D"/>
+    <g transform="translate(222 300) rotate(-24)">
+      <!-- Schatten unter dem Fahrzeug -->
+      <ellipse cx="0" cy="98" rx="150" ry="10" fill="#000" opacity="0.18"/>
+      <!-- Überrollbügel -->
+      <path d="M -46 -90 L -34 -138 L 58 -138 L 70 -90" fill="none" stroke="#E9EEF3" stroke-width="11" stroke-linejoin="round" stroke-linecap="round"/>
+      <!-- Kabine -->
+      <rect x="-52" y="-96" width="118" height="62" rx="16" fill="#F28C1B"/>
+      <rect x="-36" y="-84" width="44" height="34" rx="8" fill="#BDE7FF"/>
+      <rect x="16" y="-84" width="36" height="34" rx="8" fill="#BDE7FF"/>
+      <!-- Karosserie -->
+      <rect x="-128" y="-46" width="256" height="70" rx="22" fill="#F28C1B"/>
+      <rect x="-128" y="0" width="256" height="24" rx="12" fill="#C9680A"/>
+      <!-- Scheinwerfer und Rammschutz vorne (rechts) -->
+      <rect x="112" y="-34" width="20" height="16" rx="5" fill="#FFF3A6"/>
+      <rect x="128" y="-8" width="16" height="40" rx="6" fill="#23272E"/>
+      <g transform="translate(-82 38)">
+      <rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(0.0)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(25.7)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(51.4)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(77.1)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(102.9)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(128.6)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(154.3)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(180.0)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(205.7)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(231.4)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(257.1)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(282.9)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(308.6)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(334.3)"/>
+      <circle r="58" fill="#23272E"/>
+      <circle r="35.96" fill="#3A404A"/>
+      <circle r="24.36" fill="#F28C1B"/>
+      <circle r="8.120000000000001" fill="#23272E"/>
+      <circle cx="-6.96" cy="-9.28" r="4.0600000000000005" fill="#FFFFFF" opacity="0.7"/>
+    </g>
+      <g transform="translate(84 38)">
+      <rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(0.0)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(25.7)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(51.4)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(77.1)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(102.9)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(128.6)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(154.3)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(180.0)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(205.7)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(231.4)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(257.1)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(282.9)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(308.6)"/><rect x="-6.4" y="-62.6" width="12.8" height="11.6" rx="2.9" fill="#23272E" transform="rotate(334.3)"/>
+      <circle r="58" fill="#23272E"/>
+      <circle r="35.96" fill="#3A404A"/>
+      <circle r="24.36" fill="#F28C1B"/>
+      <circle r="8.120000000000001" fill="#23272E"/>
+      <circle cx="-6.96" cy="-9.28" r="4.0600000000000005" fill="#FFFFFF" opacity="0.7"/>
+    </g>
+    </g>
+  </g>
+</svg>
