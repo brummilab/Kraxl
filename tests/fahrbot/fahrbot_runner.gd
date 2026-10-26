@@ -301,6 +301,7 @@ func _run(seconds: float, each_tick: Callable = Callable()) -> void:
 
 func _spawn(xform: Transform3D, design: CrawlerDesign = null) -> KraxlVehicle:
 	var vehicle := KraxlVehicle.new()
+	vehicle.sounds = false
 	if design:
 		vehicle.design = design
 	vehicle.transform = xform

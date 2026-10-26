@@ -7,6 +7,7 @@ class_name KraxlInput
 ##   rechte Knöpfe A + B (unten/rechts) und R/R2  -> vorwärts
 ##   linke Knöpfe X + Y (oben/links) und L/L2     -> rückwärts
 ##   Steuerkreuz und linker Stick                 -> lenken
+##   Stick-Klick L3/R3                            -> Hupe
 ##   Select                                       -> zurück in die Garage
 ## Keine Vibration: Auf Android braucht sie die VIBRATE-Berechtigung (ADR 0007: keine Berechtigungen).
 ##
@@ -19,6 +20,7 @@ const BACKWARD := &"kraxl_zurueck"
 const LEFT := &"kraxl_links"
 const RIGHT := &"kraxl_rechts"
 const GARAGE := &"kraxl_garage"
+const HORN := &"kraxl_hupe"
 const STICK_DEADZONE := 0.3
 const EXTRA_MAPPINGS := "res://data/gamecontrollerdb_extra.txt"
 
@@ -33,6 +35,7 @@ static func setup() -> void:
 	_add(LEFT, [KEY_LEFT, KEY_A], [JOY_BUTTON_DPAD_LEFT], [[JOY_AXIS_LEFT_X, -1.0]])
 	_add(RIGHT, [KEY_RIGHT, KEY_D], [JOY_BUTTON_DPAD_RIGHT], [[JOY_AXIS_LEFT_X, 1.0]])
 	_add(GARAGE, [KEY_G, KEY_ESCAPE], [JOY_BUTTON_BACK], [])
+	_add(HORN, [KEY_H, KEY_SPACE], [JOY_BUTTON_LEFT_STICK, JOY_BUTTON_RIGHT_STICK], [])
 
 	# Menüs (Garage): Godot 4.7 belegt ui_* standardmäßig nur mit Tasten. Steuerkreuz und Stick
 	# wandern zwischen den Karten, beide rechten Knöpfe bestätigen, egal welches Layout gemeldet wird.

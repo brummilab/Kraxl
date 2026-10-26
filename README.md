@@ -16,6 +16,8 @@ Spike-Stand (Oktober 2026):
 - **Crawler-Baukasten (Garage):** 10 Kategorien mit 46 Teilen und 6 fertigen Vorlagen, alles per Antippen
   oder Gamepad, ohne Text.
 - Fahrbares Gelände (Terrain3D) mit Touch-Steuerung, Gamepad (8BitDo SN30 Pro) und FPS-Messung.
+- Töne per Code: Motor je Motor-Teil, Ketten-Rattern, Hupe, Plumps, Dreiklang beim Aufstellen, Klicks (ADR 0010).
+- **Windows bestätigt:** läuft im Mobile-Renderer (RX 6600 XT, 59 fps), Controller über 8BitDo-Adapter erkannt.
 - Der Fahrbot prüft 105 Baupläne; alle Metriken sind grün (Godot 4.7.2 + Jolt + Terrain3D 1.0.2).
 
 Offen ist der Hardware-Test am **Spike-Tag**: Windows und Android im Mobile-Renderer
@@ -54,7 +56,7 @@ src/
   input/                            InputSource-Abstraktion: Touch, Tastatur/Gamepad, Fahrbot
   vehicle/                          Rad-Controller, Bauplan → Fahrwerte, Optik
   vehicle/parts/part_catalog.gd     alle Teile und Vorlagen (mit vehicle_constants.gd einziger Ort für Physik-Werte)
-  audio/sfx.gd                      Töne per Code (Platzhalter)
+  audio/                            Töne per Code (sfx.gd) und Fahrzeuggeräusche (vehicle_audio.gd)
   world/spike_terrain.gd            Terrain3D-Region per Code (35°-Hang, Wiese, Hügel)
   spike/terrain_spike.gd            Spike-Szene inkl. 5-min-Fahrbot-Runde
 tests/fahrbot/                      Physik-Szenarien + Baukasten-Matrix (headless, CI)
@@ -100,6 +102,7 @@ Dann das Projekt mit Godot 4.7.2-stable öffnen. **F5** startet die **Garage**:
 | Vorwärts | A oder B (rechte Knöpfe), R, R2 |
 | Rückwärts | X oder Y (linke Knöpfe), L, L2 |
 | Lenken | Steuerkreuz oder linker Stick |
+| Hupe | Stick drücken (L3/R3), Tastatur H oder Leertaste, Touch-Taste mit Trichter |
 | Garage / Losfahren | Select / Start |
 
 A/B bzw. X/Y sind absichtlich doppelt belegt, weil der Controller je nach Modus vertauscht meldet

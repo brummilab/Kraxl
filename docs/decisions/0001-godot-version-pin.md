@@ -1,6 +1,6 @@
 # ADR 0001 – Godot-Version pinnen, Terrain3D-Kompatibilität zuerst prüfen
 
-**Status:** vorläufig – Hardware-Test am Spike-Tag offen
+**Status:** Windows bestätigt (26.10.2026) – Android-Test offen
 **Datum:** 2026-10-25
 **Quelle:** Plan-Verbesserungen H1
 
@@ -39,5 +39,22 @@ Projekte behalten ihre Einstellung. Der Plan ging davon aus, dass Terrain3D 1.0.
 
 ## Spike-Ergebnis (Hardware)
 
-_Noch offen._ Protokoll aus [docs/spike/spike-tag.md](../spike/spike-tag.md) hier zusammenfassen und
-endgültig entscheiden.
+### Windows – bestanden (26.10.2026, Product Owner)
+
+| Feld | Ergebnis |
+|---|---|
+| Build | Windows-Exe aus der CI (Commit `11604e3`), Godot 4.7.2-stable, Terrain3D 1.0.2 |
+| Renderer laut Statuszeile | `mobile` (Vulkan) |
+| GPU / Board | AMD Radeon RX 6600 XT / B550M GAMING X WIFI6 |
+| Terrain3D | rendert korrekt: Wiese, Erde am Hang, Auto-Shader |
+| Bildrate | 59 fps (an die Bildwiederholrate gekoppelt) |
+| Fahren | Kettenfahrer kraxelt den 35°-Hang |
+| Gamepad | 8BitDo SN30 Pro über USB Wireless Adapter 2: „XInput Controller (bekannt)“ |
+
+**Folgerung:** Godot 4.7.2 + Terrain3D 1.0.2 + Mobile-Renderer funktionieren auf Windows. Der Absturz in der
+Cloud (llvmpipe) war wie vermutet eine Eigenheit der Software-GPU.
+
+### Android – offen
+
+Ablauf: [docs/spike/spike-tag.md](../spike/spike-tag.md), Blöcke 4–7. Erst danach wird 4.7.2 endgültig
+festgeschrieben.

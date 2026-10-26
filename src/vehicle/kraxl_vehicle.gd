@@ -6,6 +6,12 @@ extends RigidBody3D
 
 const C := preload("res://src/vehicle/vehicle_constants.gd")
 
+## Nach einem Sprung (mindestens LANDING_MIN_AIR_S ohne Bodenkontakt) wieder aufgesetzt.
+## `strength` 0..1 aus der Fallgeschwindigkeit, für die Lautstärke des „Plumps“.
+signal landed(strength: float)
+## Die Aufstellhilfe hat das Fahrzeug wieder auf die Räder gebracht.
+signal righted
+
 ## Bauplan; ohne Zuweisung der Standard-Crawler.
 var design := CrawlerDesign.new()
 var spec: VehicleSpec
@@ -18,6 +24,9 @@ var occupied := true:
 		occupied = value
 		can_sleep = not value
 
+## Geräusche (Motor, Ketten, Plumps, Aufstehen); im Fahrbot aus, weil dort niemand zuhört.
+var sounds := true
+
 var wheels: Array[VehicleWheel] = []
 var parked := false
 
@@ -27,6 +36,8 @@ var _has_park_anchor := false
 var _tipped_time := 0.0
 var _righting := false
 var _inv_inertia_world := Basis()
+var _air_time := 0.0
+var _fall_speed := 0.0
 
 
 func _ready() -> void:
@@ -37,6 +48,8 @@ func _ready() -> void:
 	can_sleep = not occupied
 	_build_body()
 	_build_wheels()
+	if sounds:
+		add_child(VehicleAudio.new(self))
 
 
 func _build_body() -> void:
@@ -91,6 +104,8 @@ func _physics_process(delta: float) -> void:
 		wheel.set_meta("load", spring)
 		total_load += spring
 		apply_force(global_basis.y * spring, wheel.contact_point - global_position)
+
+	_track_landing(grounded_count, delta)
 
 	var throttle := input.throttle
 	var wants_to_drive := absf(throttle) > C.THROTTLE_DEADZONE
@@ -191,6 +206,17 @@ func _apply_tire_force(
 	apply_force(force, offset)
 
 
+func _track_landing(grounded_count: int, delta: float) -> void:
+	if grounded_count == 0:
+		_air_time += delta
+		_fall_speed = maxf(_fall_speed, -linear_velocity.y)
+		return
+	if _air_time >= C.LANDING_MIN_AIR_S:
+		landed.emit(clampf(_fall_speed / C.LANDING_FULL_SPEED, 0.15, 1.0))
+	_air_time = 0.0
+	_fall_speed = 0.0
+
+
 func _update_righting(delta: float) -> void:
 	var up_dot := global_basis.y.dot(Vector3.UP)
 	if not _righting:
@@ -201,6 +227,7 @@ func _update_righting(delta: float) -> void:
 	if up_dot > 0.95:
 		_righting = false
 		_tipped_time = 0.0
+		righted.emit()
 		return
 	var axis := global_basis.y.cross(Vector3.UP)
 	if axis.length() < 0.1:

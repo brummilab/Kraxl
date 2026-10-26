@@ -24,6 +24,7 @@ func _ready() -> void:
 	_test_gamepad()
 	_test_design()
 	await _test_garage()
+	await _test_sounds()
 
 	for e in _logger.errors:
 		_failures.append("Skriptfehler: " + e)
@@ -70,6 +71,13 @@ func _test_gamepad() -> void:
 	f.close()
 	_check(KraxlInput.load_extra_mappings(mapping_file) == 1, "Zusatz-Mappings werden geladen (Kommentare ignoriert)")
 	_check(KraxlInput.load_extra_mappings(KraxlInput.EXTRA_MAPPINGS) == 0, "Mitgelieferte Zusatzdatei ist gültig")
+
+	_press_button(JOY_BUTTON_LEFT_STICK, true)
+	source.update(0.0)
+	_check(source.horn, "L3 hupt")
+	_press_button(JOY_BUTTON_LEFT_STICK, false)
+	source.update(0.0)
+	_check(not source.horn, "Hupe aus nach Loslassen")
 
 	_press_button(JOY_BUTTON_BACK, true)
 	_check(Input.is_action_pressed(KraxlInput.GARAGE), "Select öffnet die Garage")
@@ -171,6 +179,98 @@ func _test_design() -> void:
 		var r := CrawlerDesign.random(rng)
 		var spec := VehicleSpec.from_design(r)
 		_check(spec.mass > 0 and spec.wheel_mounts.size() >= 4, "Zufallsbauplan %d ist baubar" % i)
+
+
+# --- Töne ----------------------------------------------------------------------
+
+
+func _test_sounds() -> void:
+	for s in [Sfx.blip(440.0), Sfx.click(), Sfx.horn(), Sfx.thud(), Sfx.cheer()]:
+		_check(s.data.size() > 100, "Ton erzeugt (%d Bytes)" % s.data.size())
+	for loop in [Sfx.engine_loop(55.0, 0.2), Sfx.engine_loop(85.0, 0.9), Sfx.track_rattle_loop()]:
+		_check(loop.loop_mode == AudioStreamWAV.LOOP_FORWARD and loop.loop_end * 2 == loop.data.size(),
+			"Schleife läuft nahtlos (Ende = Datenlänge)")
+	Sfx.setup_bus()
+	var bus := AudioServer.get_bus_index(Sfx.EFFECTS_BUS)
+	_check(bus != -1 and AudioServer.get_bus_effect(bus, 0) is AudioEffectHardLimiter, "Effekte-Bus mit Begrenzer")
+
+	var stage := Node3D.new()
+	add_child(stage)
+	var floor_body := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	shape.shape = BoxShape3D.new()
+	shape.shape.size = Vector3(60, 1, 60)
+	shape.position.y = -0.5
+	floor_body.add_child(shape)
+	stage.add_child(floor_body)
+
+	var design := CrawlerDesign.new()
+	design.choices[&"reifen"] = &"ketten"
+	var v := KraxlVehicle.new()
+	v.design = design
+	v.position = Vector3(0, 3.0, 0)
+	var events := {"landed": 0, "righted": 0}
+	v.landed.connect(func(_s): events.landed += 1)
+	v.righted.connect(func(): events.righted += 1)
+	stage.add_child(v)
+	var audio: VehicleAudio = v.get_node("Audio")
+	_check(audio != null and audio.engine.playing, "Motor läuft")
+	_check(audio.rattle != null, "Ketten rattern bei Ketten-Reifen")
+	await _physics_frames(240)
+	_check(events.landed >= 1, "Aufsetzen nach Fall löst Plumps aus")
+	var idle_pitch: float = audio.engine.pitch_scale
+
+	var bot := BotInputSource.new([{"duration": 3.0, "throttle": 1.0}])
+	v.input = bot
+	await _physics_frames(240)
+	_check(audio.engine.pitch_scale > idle_pitch + 0.2, "Motor wird mit Gas höher (%.2f -> %.2f)" % [idle_pitch, audio.engine.pitch_scale])
+
+	v.input = InputSource.new()
+	v.input.horn = true
+	await _physics_frames(2)
+	_check(audio.effects.playing and audio.effects.stream == Sfx.horn(), "Hupe ertönt")
+	v.input.horn = false
+
+	v.global_transform = Transform3D(Basis(Vector3.BACK, PI), v.global_position + Vector3(0, 2, 0))
+	v.linear_velocity = Vector3.ZERO
+	v.angular_velocity = Vector3.ZERO
+	await _physics_frames(600)
+	_check(events.righted >= 1, "Aufstellen spielt den Dreiklang (Signal righted)")
+
+	var touch := TouchControls.new()
+	var layer := CanvasLayer.new()
+	add_child(layer)
+	layer.add_child(touch)
+	await get_tree().process_frame
+	var horn_rect: Rect2 = touch._rects[TouchControls.Action.HORN]
+	var press := InputEventScreenTouch.new()
+	press.index = 0
+	press.pressed = true
+	press.position = horn_rect.get_center()
+	touch._input(press)
+	_check(touch.source.horn, "Touch-Hupe drückt die Hupe")
+	_check(touch._click.playing, "Touch-Taste klickt")
+	var release := InputEventScreenTouch.new()
+	release.index = 0
+	release.position = horn_rect.get_center()
+	touch._input(release)
+	_check(not touch.source.horn, "Touch-Hupe loslassen")
+	# Headless ist das Fenster winzig; geprüft wird mit echten Größen (PC-Fenster, kleines Handy quer).
+	for screen in [Vector2(1280, 720), Vector2(800, 360)]:
+		touch.size = screen
+		touch._layout()
+		var rects: Array = touch._rects.values()
+		for i in rects.size():
+			_check(Rect2(Vector2.ZERO, screen).encloses(rects[i]), "Touch-Taste %d liegt im Bild (%s)" % [i, screen])
+			for j in range(i + 1, rects.size()):
+				_check(not rects[i].intersects(rects[j]), "Touch-Tasten %d/%d überlappen nicht (%s)" % [i, j, screen])
+	layer.queue_free()
+	stage.queue_free()
+
+
+func _physics_frames(n: int) -> void:
+	for i in n:
+		await get_tree().physics_frame
 
 
 # --- Garage --------------------------------------------------------------------

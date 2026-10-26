@@ -167,7 +167,12 @@ func _build_ui() -> void:
 	layer.add_child(touch)
 
 	_hud = Label.new()
-	_hud.position = Vector2(128, 16)
+	# Breite bis vor den Fahrbot-Knopf begrenzen und umbrechen, sonst läuft lange Info darunter.
+	_hud.anchor_right = 1.0
+	_hud.offset_left = 128
+	_hud.offset_top = 16
+	_hud.offset_right = -252
+	_hud.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_hud.add_theme_color_override("font_outline_color", Color.BLACK)
 	_hud.add_theme_constant_override("outline_size", 6)
 	layer.add_child(_hud)

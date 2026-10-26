@@ -7,6 +7,8 @@ extends RefCounted
 var throttle := 0.0
 ## Lenkung: -1 (links) bis 1 (rechts).
 var steer := 0.0
+## Hupe gedrückt (gehalten); das Fahrzeug hupt beim Drücken einmal.
+var horn := false
 
 
 ## Wird einmal pro Physik-Tick vom Fahrzeug aufgerufen, bevor es die Werte liest.

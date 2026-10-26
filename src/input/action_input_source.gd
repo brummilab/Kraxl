@@ -11,3 +11,4 @@ func _init() -> void:
 func update(_delta: float) -> void:
 	throttle = Input.get_action_strength(KraxlInput.FORWARD) - Input.get_action_strength(KraxlInput.BACKWARD)
 	steer = Input.get_action_strength(KraxlInput.RIGHT) - Input.get_action_strength(KraxlInput.LEFT)
+	horn = Input.is_action_pressed(KraxlInput.HORN)

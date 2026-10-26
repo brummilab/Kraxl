@@ -17,6 +17,7 @@ Gelände:        Pfeiltasten/WASD oder Maus auf den runden Tasten; Schraubenschl
 Gamepad (8BitDo SN30 Pro, direkt oder über den 8BitDo USB Wireless Adapter 2):
   Vorwärts   A oder B, R, R2        Rückwärts  X oder Y, L, L2
   Lenken     Steuerkreuz / Stick     Garage     Select      Losfahren (in der Garage)  Start
+  Hupe       Stick drücken (L3/R3)   Tastatur: H oder Leertaste; am Bildschirm: Taste mit Trichter
 Oben links im Gelände steht, ob der Controller "bekannt" ist. Steht dort "UNBEKANNT":
 Foto der Zeile schicken.
 

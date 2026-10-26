@@ -48,6 +48,10 @@ const UPRIGHT_STIFFNESS := 16.0  # 1/s² (Eigenfrequenz 4 rad/s)
 const UPRIGHT_ANGULAR_DAMPING := 8.0  # 1/s (= 2·√Steifigkeit, kritisch gedämpft)
 const UPRIGHT_LIFT_ACCEL := 9.0  # m/s², hebt das Fahrzeug während der Aufstellhilfe an
 
+# --- Geräusch-Auslöser (keine Physik, nur wann ein Ton kommt) ---
+const LANDING_MIN_AIR_S := 0.25  # so lange ohne Bodenkontakt, bevor Aufsetzen „Plumps“ macht
+const LANDING_FULL_SPEED := 6.0  # m/s Fallgeschwindigkeit für volle Lautstärke
+
 # --- Abnahme-Metriken des Fahrbots ---
 const TARGET_HILL_ANGLE_DEG := 35.0
 const MAX_PARKED_DRIFT_M := 0.02  # in 10 s am 35°-Hang

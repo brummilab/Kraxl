@@ -1,6 +1,6 @@
 # ADR 0009 – Gamepad-Unterstützung (8BitDo SN30 Pro, USB Wireless Adapter 2)
 
-**Status:** angenommen – im Code und per Test abgesichert, Test mit echtem Controller offen
+**Status:** angenommen – Windows mit Adapter 2 bestätigt („XInput Controller, bekannt“), Android offen
 **Datum:** 2026-10-26
 
 ## Kontext
@@ -24,6 +24,7 @@ Belegung in `src/input/kraxl_input.gd`, ausgelesen über `ActionInputSource` (ei
 | Vorwärts | A **und** B (beide rechten Knöpfe), R, R2 | ↑ / W |
 | Rückwärts | X **und** Y (beide linken Knöpfe), L, L2 | ↓ / S |
 | Lenken | Steuerkreuz, linker Stick (Totzone 0,3) | ← → / A D |
+| Hupe | Stick drücken (L3 oder R3) | H / Leertaste |
 | Garage | Select | G / Esc |
 | Garage: Karte wechseln | Steuerkreuz, linker Stick | Pfeiltasten |
 | Garage: auswählen | A **und** B | Enter / Leertaste |

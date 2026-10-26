@@ -16,7 +16,7 @@ offene Welt (ca. 1×1 km) mit Hängen, Steinen, Matsch und Toren. Ohne Punkte, o
 
 | Nr. | Thema | Status |
 |---|---|---|
-| [0001](docs/decisions/0001-godot-version-pin.md) | Godot 4.7.2 + Terrain3D 1.0.2 pinnen | vorläufig, Hardware-Test offen |
+| [0001](docs/decisions/0001-godot-version-pin.md) | Godot 4.7.2 + Terrain3D 1.0.2 pinnen | Windows bestätigt, Android offen |
 | [0002](docs/decisions/0002-rad-controller.md) | Eigener Rad-Controller mit ShapeCast + Parkbremse | angenommen, Prototyp besteht 14/14 |
 | [0003](docs/decisions/0003-steuerung-kleine-haende.md) | Halte-Tasten statt Joystick | angenommen |
 | [0004](docs/decisions/0004-renderer-und-zielgeraet.md) | Mobile-Renderer, schwaches Zielgerät | angenommen, Gerät offen |
@@ -24,7 +24,8 @@ offene Welt (ca. 1×1 km) mit Hängen, Steinen, Matsch und Toren. Ohne Punkte, o
 | [0006](docs/decisions/0006-lizenzen.md) | MIT für Code, CC BY 4.0 für Assets | angenommen |
 | [0007](docs/decisions/0007-ci-und-tests.md) | CI-Ablauf, Secrets, Manifest-Gate, GUT | angenommen, Umsetzung offen |
 | [0008](docs/decisions/0008-crawler-baukasten.md) | Crawler-Baukasten (Garage), 46 Teile, 6 Vorlagen | angenommen, Feel-Check offen |
-| [0009](docs/decisions/0009-gamepad-8bitdo.md) | Gamepad 8BitDo SN30 Pro, Knopf-Paare | angenommen, Hardware-Test offen |
+| [0009](docs/decisions/0009-gamepad-8bitdo.md) | Gamepad 8BitDo SN30 Pro, Knopf-Paare | Windows bestätigt, Android offen |
+| [0010](docs/decisions/0010-toene.md) | Töne per Code (Motor, Hupe, Plumps, Klick) | angenommen, Feel-Check offen |
 
 ## Fahrphysik-Ziele (Spike)
 
@@ -45,7 +46,10 @@ Messung vom 26.10.2026 (Details in ADR 0002/0008):
 - [x] Spike-Tag vorbereiten: Spike-Szene, Fahrbot, Export-Presets, Ablaufplan (`docs/spike/spike-tag.md`)
 - [x] Terrain3D 1.0.2-stable pinnen (Skript mit SHA-256), Lizenztexte in `THIRD_PARTY_NOTICES.md`
 - [x] CI-Teil 1: Import + Fahrbot (`.github/workflows/fahrbot.yml`)
-- [ ] Spike-Tag durchführen: Windows + Android im Mobile-Renderer, Ergebnis in ADR 0001
+- [x] Spike-Tag Windows: Mobile-Renderer + Terrain3D laufen (RX 6600 XT, 59 fps), Gamepad über Adapter erkannt
+- [ ] Spike-Tag Android: Mobile-Renderer, 5-min-Runde ≥ 30 fps, APK-Gate, Gamepad per OTG
+- [x] Töne per Code (ADR 0010)
+- [ ] Elternmenü: Lautstärke Musik/Effekte getrennt, Lizenzen anzeigen
 - [ ] Entscheidung: Grenze für Rad-Einsinken (2 cm statt 0, siehe ADR 0002)
 - [ ] Konkretes Einsteiger-Android-Zielgerät benennen (ADR 0004)
 - [ ] GUT-Version pinnen
@@ -103,3 +107,13 @@ Messung vom 26.10.2026 (Details in ADR 0002/0008):
   - Geprüft: Das Paket enthält Szenen und Controller-Mappings, aber keine Tests und keine Doku; das
     exportierte Spielpaket startet ohne Skriptfehler.
   - CI baut die Exe ab jetzt automatisch.
+- **2026-10-26** – Erster Test am PC (PO):
+  - Windows-Exe startet; Mobile-Renderer mit Vulkan auf AMD RX 6600 XT, 59 fps.
+  - Terrain3D rendert korrekt; der Kettenfahrer fährt den 35°-Hang hinauf.
+  - 8BitDo SN30 Pro über USB Wireless Adapter 2 wird als „XInput Controller (bekannt)“ erkannt.
+  - → Windows-Teil von H1 bestanden (ADR 0001).
+- **2026-10-26** – Töne (ADR 0010):
+  - Motor je Motor-Teil (Tonhöhe folgt Tempo), Ketten-Rattern, Hupe (L3/R3, H, Touch-Taste), Plumps beim
+    Aufsetzen, Dreiklang nach dem Aufstellen, Klick auf Touch-Tasten.
+  - Alles läuft über einen Effekte-Bus mit Begrenzer.
+  - Statuszeile bricht vor dem Fahrbot-Knopf um. UI-Test: 262 Checks.
