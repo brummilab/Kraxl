@@ -1,0 +1,29 @@
+KRAXL – Windows-Testversion (Spike-Stand)
+==========================================
+
+Starten
+-------
+1. ZIP komplett entpacken (nicht direkt aus dem ZIP starten).
+   Kraxl.exe und libterrain.windows.release.x86_64.dll müssen im selben Ordner liegen.
+2. Kraxl.exe doppelklicken.
+   Die Exe ist nicht signiert. Windows zeigt deshalb evtl. "Der Computer wurde durch Windows
+   geschützt" -> "Weitere Informationen" -> "Trotzdem ausführen".
+
+Bedienung
+---------
+Garage (Start): links Kategorien, unten Teile, oben rechts Würfel (Zufall) und Zielflagge (losfahren).
+Gelände:        Pfeiltasten/WASD oder Maus auf den runden Tasten; Schraubenschlüssel = zurück in die Garage.
+
+Gamepad (8BitDo SN30 Pro, direkt oder über den 8BitDo USB Wireless Adapter 2):
+  Vorwärts   A oder B, R, R2        Rückwärts  X oder Y, L, L2
+  Lenken     Steuerkreuz / Stick     Garage     Select      Losfahren (in der Garage)  Start
+Oben links im Gelände steht, ob der Controller "bekannt" ist. Steht dort "UNBEKANNT":
+Foto der Zeile schicken.
+
+Messrunde: Knopf "Fahrbot 5 min" oben rechts -> Ergebnis (fps) erscheint am Bildschirm.
+
+Hinweise
+--------
+- Kein Internet, keine Datenerfassung. Der gebaute Crawler wird nur lokal gespeichert
+  (%APPDATA%\Godot\app_userdata\Kraxl\garage\crawler.json).
+- Lizenzen: LICENSE (Code, MIT), THIRD_PARTY_NOTICES.md (Godot, Terrain3D).

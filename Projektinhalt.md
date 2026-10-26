@@ -49,7 +49,8 @@ Messung vom 26.10.2026 (Details in ADR 0002/0008):
 - [ ] Entscheidung: Grenze für Rad-Einsinken (2 cm statt 0, siehe ADR 0002)
 - [ ] Konkretes Einsteiger-Android-Zielgerät benennen (ADR 0004)
 - [ ] GUT-Version pinnen
-- [ ] CI-Teil 2: Export Windows + Android und Manifest-Gate (`tools/check_apk_permissions.sh`)
+- [x] CI: Windows-Exe als Artefakt nach grünen Tests (Export-Vorlagen gecacht)
+- [ ] CI-Teil 2: Android-Export und Manifest-Gate (`tools/check_apk_permissions.sh`)
 - [ ] Godot-MCP-Server auswählen und pinnen (M2)
 - [ ] Sub-Agent-Definitionen in `.claude/agents/` mit eingebetteten Regeln (M3)
 - [x] `InputSource`-Abstraktion für Touch-UI, Tastatur und Fahrbot (M1)
@@ -96,3 +97,9 @@ Messung vom 26.10.2026 (Details in ADR 0002/0008):
   - Absicherung gegen unbekannte Firmware: Controller-Statuszeile mit GUID und
     `data/gamecontrollerdb_extra.txt`.
   - UI-Test: 212 Checks.
+  - Absturz beim Beenden behoben (Lambda am Input-Singleton), Regel in CLAUDE.md.
+- **2026-10-26** – Erste Windows-Exe:
+  - Exe (110 MB) plus Terrain3D-DLL, als ZIP mit LIESMICH an den PO.
+  - Geprüft: Das Paket enthält Szenen und Controller-Mappings, aber keine Tests und keine Doku; das
+    exportierte Spielpaket startet ohne Skriptfehler.
+  - CI baut die Exe ab jetzt automatisch.

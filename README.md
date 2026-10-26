@@ -63,10 +63,21 @@ tools/                              Terrain3D laden, APK-Berechtigungen prüfen,
 data/gamecontrollerdb_extra.txt     zusätzliche Controller-Mappings (wird mit exportiert)
 icon.svg                            App-Symbol (Godot, Windows, Android)
 scripts/hooks/pre-commit            Schutz für Kinderbeiträge
-.github/workflows/fahrbot.yml       CI: Import + Fahrbot + UI-Test
+.github/workflows/fahrbot.yml       CI: Import + Fahrbot + UI-Test + Rauchtest, danach Windows-Exe als Artefakt
 CLAUDE.md                           nicht verhandelbare Regeln für Agenten
 Projektinhalt.md                    laufende Projektübersicht
 ```
+
+## Windows-Version herunterladen
+
+Jeder Push auf `main` mit grünen Tests baut automatisch eine Windows-Exe:
+- **Actions** → letzter Lauf „Fahrbot“ → Artefakt **Kraxl-windows-…** herunterladen.
+- Entpacken und `Kraxl.exe` starten. Die DLL muss im selben Ordner bleiben.
+- Die Exe ist unsigniert: SmartScreen → „Weitere Informationen“ → „Trotzdem ausführen“.
+- Hinweise für Tester stehen in `LIESMICH.txt` im ZIP.
+
+Selbst bauen: Godot-Export-Vorlagen 4.7.2 installieren, dann
+`godot --headless --export-release "Windows" build/windows/Kraxl.exe`.
 
 ## Einrichtung
 

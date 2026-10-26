@@ -58,3 +58,57 @@ jobs:
             fahrbot.json
             fahrbot.log
           if-no-files-found: ignore
+
+  # Windows-Exe nur, wenn alle Tests grün sind. Ergebnis: Artefakt "Kraxl-windows" am Lauf.
+  windows-exe:
+    needs: fahrbot
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      GODOT_VERSION: 4.7.2-stable
+      TEMPLATES: /home/runner/.local/share/godot/export_templates/4.7.2.stable
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Godot laden
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/godot.zip" \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP"
+          echo "GODOT=$RUNNER_TEMP/Godot_v${GODOT_VERSION}_linux.x86_64" >> "$GITHUB_ENV"
+
+      - name: Export-Vorlagen aus dem Cache
+        id: templates
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TEMPLATES }}
+          key: godot-templates-4.7.2-windows
+
+      - name: Export-Vorlagen laden (nur Windows x86_64)
+        if: steps.templates.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/tpl.tpz" \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_export_templates.tpz"
+          unzip -q "$RUNNER_TEMP/tpl.tpz" 'templates/version.txt' 'templates/windows_*_x86_64*' -d "$RUNNER_TEMP/tpl"
+          mkdir -p "$TEMPLATES"
+          mv "$RUNNER_TEMP"/tpl/templates/* "$TEMPLATES/"
+
+      - name: Terrain3D laden (gepinnt)
+        run: sh tools/fetch_terrain3d.sh
+
+      - name: Import und Export
+        run: |
+          "$GODOT" --headless --import --quit
+          mkdir -p build/windows
+          "$GODOT" --headless --export-release "Windows" build/windows/Kraxl.exe
+          test -s build/windows/Kraxl.exe
+          test -s build/windows/libterrain.windows.release.x86_64.dll
+          cp LICENSE THIRD_PARTY_NOTICES.md build/windows/
+          cp tools/LIESMICH-windows.txt build/windows/LIESMICH.txt
+
+      - name: Exe bereitstellen
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kraxl-windows-${{ github.sha }}
+          path: build/windows/
+          retention-days: 30

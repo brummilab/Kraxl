@@ -1,6 +1,6 @@
 # ADR 0007 – CI-Ablauf, Secrets, Manifest-Gate und Tests
 
-**Status:** angenommen – Workflow noch nicht umgesetzt
+**Status:** angenommen – Tests und Windows-Export umgesetzt, Android-Export und Manifest-Gate offen
 **Datum:** 2026-10-25
 **Quelle:** Plan-Verbesserungen H6, M1, M2, M3, M7
 
