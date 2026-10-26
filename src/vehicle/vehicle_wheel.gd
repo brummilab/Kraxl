@@ -4,9 +4,14 @@ extends ShapeCast3D
 ## Die Kugel erkennt Kanten von Steinen und Stufen früher als ein einzelner Strahl
 ## und kann nicht in Spalten schmaler als der Raddurchmesser fallen.
 
-var radius := VehicleConstants.WHEEL_RADIUS_M
-var travel := VehicleConstants.SUSPENSION_TRAVEL_M
-var is_front := false
+var radius := 0.4
+var width := 0.3
+var travel := 0.35
+## Lenkfaktor: 1 = Vorderachse, 0 = starr, negativ = gegenläufig (Allrad), positiv = Krebsgang.
+var steer_factor := 0.0
+var hub_color := Color(0.95, 0.55, 0.1)
+## Ketten-Laufwerk statt Rad: nur die Optik ändert sich, der Bodenkontakt bleibt die Kugel.
+var tracks := false
 
 ## Ergebnis des letzten Ticks.
 var grounded := false
@@ -27,13 +32,13 @@ func _ready() -> void:
 	max_results = 1
 	enabled = false  # Abfrage nur per force_shapecast_update() im Tick des Fahrzeugs
 
-	_visual = MeshInstance3D.new()
-	var mesh := CylinderMesh.new()
-	mesh.top_radius = radius
-	mesh.bottom_radius = radius
-	mesh.height = 0.3
-	_visual.mesh = mesh
+	_visual = Node3D.new()
 	add_child(_visual)
+	if tracks:
+		_build_track_pod()
+	else:
+		_visual.add_child(_disc(radius, width, Color(0.12, 0.12, 0.12)))
+		_visual.add_child(_disc(radius * 0.5, width + 0.02, hub_color))
 
 
 ## Fragt den Boden ab und liefert die Kompressionsgeschwindigkeit (m/s).
@@ -65,11 +70,44 @@ func _exact_distance() -> float:
 	return clampf((height - radius) / facing, 0.0, travel)
 
 
+## Dreieckiges Ketten-Laufwerk (wie Track-Pods an echten Crawlern), seitlich am Rad befestigt.
+func _build_track_pod() -> void:
+	var track := StandardMaterial3D.new()
+	track.albedo_color = Color(0.12, 0.12, 0.12)
+	var mesh := PrismMesh.new()
+	mesh.size = Vector3(radius * 2.6, radius * 1.8, width)
+	mesh.material = track
+	var pod := MeshInstance3D.new()
+	pod.mesh = mesh
+	pod.rotation = Vector3(0, PI / 2, 0)
+	pod.position.y = -radius * 0.1
+	_visual.add_child(pod)
+	var hub := _disc(radius * 0.35, width + 0.04, hub_color)
+	hub.rotation = Vector3(0, 0, PI / 2)
+	hub.position.y = radius * 0.15
+	_visual.add_child(hub)
+
+
+func _disc(r: float, h: float, color: Color) -> MeshInstance3D:
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = r
+	mesh.bottom_radius = r
+	mesh.height = h
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	mesh.material = material
+	var node := MeshInstance3D.new()
+	node.mesh = mesh
+	return node
+
+
 ## Mittelpunkt des Rads in Weltkoordinaten.
 func center() -> Vector3:
 	return _visual.global_position
 
 
 func update_visual(forward_speed: float, delta: float) -> void:
+	if tracks:
+		return
 	_spin -= forward_speed / radius * delta
 	_visual.basis = Basis(Vector3.RIGHT, _spin) * Basis(Vector3.FORWARD, PI / 2)

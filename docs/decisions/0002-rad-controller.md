@@ -30,12 +30,18 @@ Beim Messen sind drei Fallstricke aufgetaucht. Sie stehen hier, damit niemand si
 | Fahrzeug rollte vom 35°-Hang (93 m in 10 s) | Ausroll-Bremse (500 N/Rad) schwächer als Hangabtrieb (≈ 563 N/Rad), Parkbremse griff nie | Hangabtrieb wird ohne Gas immer gegengehalten, verteilt nach Radlast |
 | Zittern im Stand (0,07 rad/s) | `safe_fraction` des ShapeCasts ist grob gerastert (mm-Sprünge pro Tick) → Dämpfer erzeugt ±300 N Rauschen | Radabstand exakt aus Kontaktpunkt und -normale berechnet |
 | Schwingung im 2-Tick-Takt (0,03 rad/s) | Geschwindigkeit pro Rad in einem Tick komplett aufheben koppelt über 4 Räder mit ~Faktor 2 in die Gierdrehung | `PARK_GAIN` und `LATERAL_GRIP` = 0,5 |
-| Kriechen 4–7 cm / 10 s | Karosserie am Hang 1,8° geneigt → Federkräfte zeigen hangabwärts | Parkbremse hält eine gemerkte Lage (`PARK_HOLD_STIFFNESS`), Anker rutscht ab 10 cm mit |
+| Kriechen 4–7 cm / 10 s | Karosserie am Hang 1,8° geneigt → Federkräfte zeigen hangabwärts | Parkbremse hält eine gemerkte Lage (`PARK_HOLD_STIFFNESS_PER_KG`), Anker rutscht ab 10 cm mit |
+
+Nachträge vom 26.10.2026 aus der Baukasten-Matrix (ADR 0008):
+- Parkbremse und Seitenführung rechnen mit der **effektiven Masse** am Kontaktpunkt statt „Masse ÷ Räder“.
+- Dämpfung 1300 → 1800 N·s/m beim Standard-Crawler.
+- Die Aufstellhilfe ist jetzt ein PD-Regler auf den Kippwinkel.
+- Alle Werte skalieren mit Radlast bzw. Masse (`*_PER_KG`).
 
 ## Abnahme-Metriken (Fahrbot)
 
 Aufruf: `godot --headless --fixed-fps 120 res://tests/fahrbot/fahrbot.tscn` (läuft auch in der CI).
-Messung vom 25.10.2026, Godot 4.7.2 + Jolt + Terrain3D 1.0.2:
+Messung vom 26.10.2026 (Standard-Crawler nach dem Baukasten-Umbau), Godot 4.7.2 + Jolt + Terrain3D 1.0.2:
 
 | Szenario | Metrik | Wert | Ziel | ok |
 |---|---|---|---|---|
@@ -45,14 +51,17 @@ Messung vom 25.10.2026, Godot 4.7.2 + Jolt + Terrain3D 1.0.2:
 | hang_35_bergauf | Winkelgeschw. im Stand | 0,0001 rad/s | ≤ 0,01 rad/s | ✅ |
 | hang_35_quer | Drift in 10 s | 0,0 mm | ≤ 2 cm | ✅ |
 | hang_35_quer | Winkelgeschw. im Stand | 0,0001 rad/s | ≤ 0,01 rad/s | ✅ |
-| lenken | Drehung in 6 s (Vollausschlag) | 392° | ≥ 180° | ✅ |
-| lenken | Kippen (cos Neigung) | 0,998 | ≥ 0,9 | ✅ |
+| lenken | Drehung in 6 s (Vollausschlag) | 385° | ≥ 180° | ✅ |
+| lenken | Kippen (cos Neigung) | 0,999 | ≥ 0,9 | ✅ |
 | stufe_30cm | Zeit bis oben (Vollgas) | 1,8 s | ≤ 8 s | ✅ |
-| spalt_15cm | Rad-Einsinken | 14,8 mm | ≤ 2 cm ¹ | ✅ |
+| spalt_15cm | Rad-Einsinken | 16,9 mm | ≤ 2 cm ¹ | ✅ |
 | spalt_15cm | Strecke nach dem Spalt | 16,2 m | ≥ 3 m | ✅ |
-| aufstellen | Zeit bis aufrecht | 2,3 s | ≤ 3 s | ✅ |
+| aufstellen | Zeit bis aufrecht | 2,0 s | ≤ 3 s | ✅ |
 | terrain3d_hang_quer | Drift in 10 s | 0,0 mm | ≤ 2 cm | ✅ |
-| terrain3d_hang_quer | Winkelgeschw. im Stand | 0,0001 rad/s | ≤ 0,01 rad/s | ✅ |
+| terrain3d_hang_quer | Winkelgeschw. im Stand | 0,0002 rad/s | ≤ 0,01 rad/s | ✅ |
+| baukasten (105 Baupläne) | schlechteste Drift / Zittern / Aufstehzeit | 0,2 mm / 0,002 rad/s / 2,2 s | ≤ 2 cm / 0,01 / 3 s | ✅ |
+
+Vorher (25.10.) zum Vergleich: Einsinken 14,8 mm, Aufstellen 2,3 s, Drehung 392°; alle übrigen Werte gleich.
 
 ¹ **Abweichung vom Plan („Einsinken = 0“), Entscheidung des Product Owners nötig:**
 - Ein rundes Rad mit r = 0,4 m sinkt in einen 15-cm-Spalt geometrisch zwangsläufig 7 mm ein.

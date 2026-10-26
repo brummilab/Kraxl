@@ -15,7 +15,7 @@ permissions:
 jobs:
   fahrbot:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       GODOT_VERSION: 4.7.2-stable
     steps:
@@ -34,12 +34,20 @@ jobs:
       - name: Import
         run: '"$GODOT" --headless --import --quit'
 
-      - name: Fahrbot
+      # Kein --quit-after: Godot beendet damit mit Exit-Code 0, auch mitten im Lauf.
+      # Der Fahrbot hat einen eigenen Watchdog (--timeout, Exit-Code 2).
+      - name: Fahrbot (inkl. Baukasten-Matrix)
         run: |
           set -o pipefail
-          "$GODOT" --headless --fixed-fps 120 --quit-after 60000 \
-            res://tests/fahrbot/fahrbot.tscn -- --json=fahrbot.json | tee fahrbot.log
+          "$GODOT" --headless --fixed-fps 120 \
+            res://tests/fahrbot/fahrbot.tscn -- --json=fahrbot.json --timeout=600 | tee fahrbot.log
           grep '^|' fahrbot.log >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Garage, Bauplan und Gamepad
+        run: timeout 300 "$GODOT" --headless res://tests/ui/ui_test.tscn
+
+      - name: Spielszene (Rauchtest, 5 s Fahrbot-Runde)
+        run: timeout 120 "$GODOT" --headless --fixed-fps 60 res://scenes/spike/terrain_spike.tscn -- --benchmark-seconds=5
 
       - name: Messwerte sichern
         if: always()

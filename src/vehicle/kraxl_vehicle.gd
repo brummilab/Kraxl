@@ -2,8 +2,13 @@ class_name KraxlVehicle
 extends RigidBody3D
 ## Eigener Rad-Controller (ADR 0002): Kugel-ShapeCasts, Feder-Dämpfer, Reifenkräfte
 ## ohne Division durch die Geschwindigkeit, Parkbremse im Stand und Aufstellhilfe.
+## Aufbau und Fahrwerte kommen aus dem Bauplan (ADR 0008); `design` vor add_child setzen.
 
 const C := preload("res://src/vehicle/vehicle_constants.gd")
+
+## Bauplan; ohne Zuweisung der Standard-Crawler.
+var design := CrawlerDesign.new()
+var spec: VehicleSpec
 
 ## Eingabe; ohne Zuweisung steht das Fahrzeug.
 var input: InputSource = InputSource.new()
@@ -21,42 +26,47 @@ var _park_anchor := Transform3D()
 var _has_park_anchor := false
 var _tipped_time := 0.0
 var _righting := false
+var _inv_inertia_world := Basis()
 
 
 func _ready() -> void:
-	mass = C.MASS_KG
+	spec = VehicleSpec.from_design(design)
+	mass = spec.mass
 	center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
-	center_of_mass = Vector3(0, C.CENTER_OF_MASS_Y_M, 0)
+	center_of_mass = spec.center_of_mass
 	can_sleep = not occupied
 	_build_body()
 	_build_wheels()
 
 
 func _build_body() -> void:
+	# Kollision: Fahrgestell + Kabine. Die Kabine ist das Dach, auf dem ein gekipptes Fahrzeug
+	# liegt, bevor die Aufstellhilfe greift.
+	var top := spec.body_size.y * 0.5
+	_add_box_collision(spec.body_size, Vector3.ZERO)
+	_add_box_collision(spec.cab_size, Vector3(0, top + spec.cab_size.y * 0.5, spec.cab_z))
+	CrawlerVisuals.build(self, spec, design)
+
+
+func _add_box_collision(size: Vector3, pos: Vector3) -> void:
 	var box := BoxShape3D.new()
-	box.size = C.BODY_SIZE_M
+	box.size = size
 	var collision := CollisionShape3D.new()
 	collision.shape = box
+	collision.position = pos
 	add_child(collision)
-
-	var mesh := BoxMesh.new()
-	mesh.size = C.BODY_SIZE_M
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.95, 0.55, 0.1)
-	mesh.material = material
-	var visual := MeshInstance3D.new()
-	visual.mesh = mesh
-	add_child(visual)
 
 
 func _build_wheels() -> void:
-	var x := C.WHEEL_TRACK_M * 0.5
-	var z := C.WHEEL_BASE_M * 0.5
-	# -Z ist vorne.
-	for mount in [Vector3(-x, 0, -z), Vector3(x, 0, -z), Vector3(-x, 0, z), Vector3(x, 0, z)]:
+	for i in spec.wheel_mounts.size():
 		var wheel := VehicleWheel.new()
-		wheel.position = mount + Vector3(0, C.WHEEL_MOUNT_Y_M, 0)
-		wheel.is_front = mount.z < 0
+		wheel.position = spec.wheel_mounts[i]
+		wheel.steer_factor = spec.steer_factors[i]
+		wheel.radius = spec.wheel_radius
+		wheel.width = spec.wheel_width
+		wheel.travel = spec.travel
+		wheel.hub_color = spec.color
+		wheel.tracks = spec.tracks
 		add_child(wheel)
 		wheel.add_exception(self)
 		wheels.append(wheel)
@@ -74,9 +84,9 @@ func _physics_process(delta: float) -> void:
 			continue
 		grounded_count += 1
 		var spring := clampf(
-			C.SPRING_STIFFNESS * wheel.compression + C.SPRING_DAMPING * compression_velocity,
+			spec.spring * wheel.compression + spec.damping * compression_velocity,
 			0.0,
-			C.MAX_SUSPENSION_FORCE
+			spec.max_suspension_force
 		)
 		wheel.set_meta("load", spring)
 		total_load += spring
@@ -87,10 +97,10 @@ func _physics_process(delta: float) -> void:
 	parked = not wants_to_drive and linear_velocity.length() < C.PARK_SPEED_THRESHOLD
 	_update_park_anchor()
 	if grounded_count > 0 and total_load > 0.0:
-		var share := mass / grounded_count
+		_inv_inertia_world = _world_inertia().inverse()
 		for wheel in wheels:
 			if wheel.grounded:
-				_apply_tire_force(wheel, share, total_load, throttle, delta)
+				_apply_tire_force(wheel, grounded_count, total_load, throttle, delta)
 
 	_update_righting(delta)
 	for wheel in wheels:
@@ -112,21 +122,32 @@ func _update_steering(delta: float) -> void:
 	var target := -input.steer * deg_to_rad(C.MAX_STEER_ANGLE_DEG)
 	_steer_angle = move_toward(_steer_angle, target, deg_to_rad(C.STEER_SPEED_DEG_PER_S) * delta)
 	for wheel in wheels:
-		if wheel.is_front:
-			wheel.rotation.y = _steer_angle
+		wheel.rotation.y = _steer_angle * wheel.steer_factor
 
 
-## Reifenkraft eines Rads. `share` ist die anteilige Masse pro Bodenkontakt.
-## Die Hangabtriebskraft wird nach Radlast verteilt, weil das bergseitige Rad weniger hält.
+## Effektive Masse am Kontaktpunkt in Richtung `dir`, geteilt durch die Zahl der Räder, die
+## gleichzeitig ziehen. Berücksichtigt die Drehträgheit: Bei kurzem Radstand oder hohem
+## Schwerpunkt dreht eine Kraft am Rad das Fahrzeug stark, die Masse wirkt dort also kleiner.
+## Mit „Masse ÷ Räder“ schwingt die Parkbremse bei solchen Bauplänen (ADR 0008).
+func _effective_mass(offset: Vector3, dir: Vector3, contacts: int) -> float:
+	if dir.length_squared() < 1e-8:
+		return mass / contacts
+	var arm := (offset - global_basis * center_of_mass).cross(dir.normalized())
+	var k := 1.0 / mass + arm.dot(_inv_inertia_world * arm)
+	return 1.0 / (k * contacts)
+
+
+## Reifenkraft eines Rads. Die Hangabtriebskraft wird nach Radlast verteilt, weil das
+## bergseitige Rad weniger hält.
 func _apply_tire_force(
-	wheel: VehicleWheel, share: float, total_load: float, throttle: float, delta: float
+	wheel: VehicleWheel, contacts: int, total_load: float, throttle: float, delta: float
 ) -> void:
 	var n := wheel.contact_normal
 	var offset := wheel.contact_point - global_position
 	var velocity := linear_velocity + angular_velocity.cross(offset)
 	var v_plane := velocity - n * velocity.dot(n)
 	var load: float = wheel.get_meta("load", 0.0)
-	var max_force := C.TIRE_FRICTION * load
+	var max_force := spec.tire_friction * load
 	var gravity_plane := get_gravity() * mass * (load / total_load)
 	gravity_plane -= n * gravity_plane.dot(n)
 
@@ -137,7 +158,8 @@ func _apply_tire_force(
 		# die Federkräfte, die bei geneigter Karosserie hangabwärts zeigen.
 		var error := wheel.global_position - _park_anchor * wheel.position
 		error -= n * error.dot(n)
-		force = -error * C.PARK_HOLD_STIFFNESS - v_plane * share / delta * C.PARK_GAIN - gravity_plane
+		var share := _effective_mass(offset, v_plane, contacts)
+		force = -error * spec.park_hold_stiffness - v_plane * share / delta * C.PARK_GAIN - gravity_plane
 	else:
 		var forward := -wheel.global_basis.z
 		forward = (forward - n * forward.dot(n)).normalized()
@@ -146,21 +168,21 @@ func _apply_tire_force(
 		var v_lat := v_plane.dot(side)
 
 		# Seitenführung: Quergeschwindigkeit pro Tick zum Großteil abbauen, Hang seitlich halten.
-		var f_lat := -v_lat * share / delta * C.LATERAL_GRIP - gravity_plane.dot(side)
+		var f_lat := -v_lat * _effective_mass(offset, side, contacts) / delta * C.LATERAL_GRIP - gravity_plane.dot(side)
 
 		var per_wheel := 1.0 / wheels.size()
 		var f_long := 0.0
 		if absf(throttle) > C.THROTTLE_DEADZONE:
-			var max_speed := C.MAX_SPEED_MPS * (1.0 if throttle > 0 else C.REVERSE_SPEED_FACTOR)
+			var max_speed := spec.max_speed * (1.0 if throttle > 0 else C.REVERSE_SPEED_FACTOR)
 			if v_long * throttle < -0.5:
-				f_long = -signf(v_long) * C.BRAKE_FORCE * per_wheel
+				f_long = -signf(v_long) * spec.brake_force * per_wheel
 			elif absf(v_long) < max_speed:
-				f_long = throttle * C.ENGINE_FORCE * per_wheel
+				f_long = throttle * spec.engine_force * per_wheel
 		else:
 			# Ausrollen bis zur Parkbremse, auch bergab; clampf statt sign() vermeidet Sprünge um v = 0.
 			f_long = -gravity_plane.dot(forward)
-			f_long -= clampf(v_long, -1.0, 1.0) * C.BRAKE_FORCE * per_wheel * 0.5
-		f_long -= clampf(v_long * 10.0, -1.0, 1.0) * C.ROLLING_RESISTANCE * load
+			f_long -= clampf(v_long, -1.0, 1.0) * spec.brake_force * per_wheel * 0.5
+		f_long -= clampf(v_long * 10.0, -1.0, 1.0) * spec.rolling_resistance * load
 
 		force = forward * f_long + side * f_lat
 
@@ -183,8 +205,23 @@ func _update_righting(delta: float) -> void:
 	var axis := global_basis.y.cross(Vector3.UP)
 	if axis.length() < 0.1:
 		axis = global_basis.z  # genau auf dem Dach: über die Längsachse drehen
-	apply_torque(axis.normalized() * C.UPRIGHT_TORQUE - angular_velocity * C.UPRIGHT_DAMPING)
+	var angle := acos(clampf(up_dot, -1.0, 1.0))
+	var accel := axis.normalized() * C.UPRIGHT_STIFFNESS * angle - angular_velocity * C.UPRIGHT_ANGULAR_DAMPING
+	apply_torque(_world_inertia() * accel)
 	apply_central_force(Vector3.UP * mass * C.UPRIGHT_LIFT_ACCEL)
+
+
+## Trägheitstensor in Weltkoordinaten, aus der von Jolt berechneten Hauptträgheit.
+func _world_inertia() -> Basis:
+	var state := PhysicsServer3D.body_get_direct_state(get_rid())
+	var inv: Vector3 = state.inverse_inertia
+	var principal := Basis.from_scale(Vector3(
+		1.0 / inv.x if inv.x > 0.0 else 0.0,
+		1.0 / inv.y if inv.y > 0.0 else 0.0,
+		1.0 / inv.z if inv.z > 0.0 else 0.0,
+	))
+	var rotation := global_basis.orthonormalized() * state.principal_inertia_axes
+	return rotation * principal * rotation.transposed()
 
 
 func is_righting() -> bool:

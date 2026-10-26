@@ -17,6 +17,10 @@ auf dem Android-Zielgerät (ADR 0004) im Modus „Kleine Hände“.
 | 8 | Jede Berührung gibt sofort Ton + Bild-Feedback | ☐ | |
 | 9 | „Haus“-Knopf führt verständlich zur Garage | ☐ | |
 | 10 | Kein Moment, der sich wie „Scheitern“ anfühlt | ☐ | |
+| 11 | Garage: Kind findet ohne Hilfe Räder, Farbe und Zielflagge | ☐ | |
+| 12 | Garage: jede Vorlage fährt sich erkennbar anders (Ketten langsam, Monster hoch, 6×6 stabil) | ☐ | |
+| 13 | 8BitDo SN30 Pro: rechte Knöpfe = vor, linke = zurück, Steuerkreuz lenkt, Select = Garage | ☐ | |
+| 14 | 8BitDo SN30 Pro: Garage komplett mit Steuerkreuz + rechten Knöpfen bedienbar, Start = losfahren | ☐ | |
 
 **Gesamturteil:** ☐ Fühlt sich gut an – Merge freigegeben  ☐ Nachbessern
 

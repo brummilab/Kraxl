@@ -1,11 +1,13 @@
 extends Node3D
-## Spike-Szene (ADR 0001/0004): Terrain3D + Fahrzeug + Touch-Steuerung + FPS-Messung.
+## Spike-Szene (ADR 0001/0004): Terrain3D + gebauter Crawler + Touch/Gamepad + FPS-Messung.
+## Schraubenschlüssel oben links (oder Select am Gamepad) führt zurück in die Garage.
 ## Läuft auf Windows und Android. Knopf oben rechts startet die 5-min-Fahrbot-Runde;
 ## das Ergebnis steht danach auf dem Bildschirm und im Log (Remote-Debugger / adb logcat).
 ## Mit `-- --benchmark` startet die Runde sofort, `-- --benchmark-seconds=N` verkürzt sie,
 ## `-- --screenshot=pfad.png` speichert ein Bild und beendet.
 
 const C := preload("res://src/vehicle/vehicle_constants.gd")
+const GARAGE_SCENE := "res://scenes/garage/garage.tscn"
 const BENCHMARK_SECONDS := 300.0
 const TARGET_FPS := 30.0
 const CAMERA_DISTANCE := 8.0
@@ -29,17 +31,21 @@ var _result_text := ""
 func _ready() -> void:
 	_camera = Camera3D.new()
 	_camera.far = 1000.0
+	# Die Kamera folgt in _process; Physik-Interpolation würde sie doppelt glätten (Godot warnt).
+	_camera.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	add_child(_camera)
 	_terrain = SpikeTerrain.create(self, _camera)
 
+	KraxlInput.setup()
 	vehicle = KraxlVehicle.new()
+	vehicle.design = GameState.design().duplicate_design()
 	var start := SpikeTerrain.CENTER
 	start.y = SpikeTerrain.height_at(start.x, start.z) + 1.0
 	vehicle.position = start
 	add_child(vehicle)
 
 	_build_ui()
-	_driver_input = CombinedInputSource.new([touch.source, KeyboardInputSource.new()])
+	_driver_input = CombinedInputSource.new([touch.source, ActionInputSource.new()])
 	vehicle.input = _driver_input
 	_camera.global_position = start + Vector3(0, CAMERA_HEIGHT, CAMERA_DISTANCE)
 
@@ -64,6 +70,8 @@ func _save_screenshot_later(path: String) -> void:
 
 
 func _process(delta: float) -> void:
+	if Input.is_action_just_pressed(KraxlInput.GARAGE):
+		open_garage()
 	_follow_camera(delta)
 	if _bench_running:
 		_frame_times.append(delta)
@@ -83,6 +91,10 @@ func _follow_camera(delta: float) -> void:
 	target.y = maxf(target.y, ground)
 	_camera.global_position = _camera.global_position.lerp(target, 1.0 - exp(-3.0 * delta))
 	_camera.look_at(vehicle.global_position + Vector3.UP)
+
+
+func open_garage() -> void:
+	get_tree().change_scene_to_file(GARAGE_SCENE)
 
 
 func _start_benchmark() -> void:
@@ -117,7 +129,8 @@ func _finish_benchmark() -> void:
 	]
 	print("[Spike] ", _result_text)
 	print("[Spike] ", _system_info().replace("\n", " | "))
-	if "--benchmark" in OS.get_cmdline_user_args():
+	var args := Array(OS.get_cmdline_user_args())
+	if "--benchmark" in args or args.any(func(a): return a.begins_with("--benchmark-seconds=")):
 		get_tree().quit(0 if ok else 1)
 
 
@@ -148,7 +161,7 @@ func _build_ui() -> void:
 	layer.add_child(touch)
 
 	_hud = Label.new()
-	_hud.position = Vector2(16, 16)
+	_hud.position = Vector2(128, 16)
 	_hud.add_theme_color_override("font_outline_color", Color.BLACK)
 	_hud.add_theme_constant_override("outline_size", 6)
 	layer.add_child(_hud)
@@ -163,4 +176,11 @@ func _build_ui() -> void:
 	_bench_button.offset_top = 16
 	_bench_button.offset_bottom = 96
 	_bench_button.pressed.connect(_start_benchmark)
+	_bench_button.focus_mode = Control.FOCUS_NONE  # sonst löst der Gas-Knopf am Gamepad ihn aus
 	layer.add_child(_bench_button)
+
+	var garage := IconCard.new(&"garage", &"", 96.0)
+	garage.focus_mode = Control.FOCUS_NONE
+	garage.position = Vector2(16, 16)
+	garage.pressed.connect(open_garage)
+	layer.add_child(garage)

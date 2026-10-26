@@ -3,7 +3,9 @@ extends Node3D
 ##
 ## Aufruf (headless, so schnell wie möglich mit festem 120-Hz-Takt):
 ##   godot --headless --fixed-fps 120 res://tests/fahrbot/fahrbot.tscn -- [--only=name,name] [--json=pfad]
-## Ohne --headless sieht man die Szenarien laufen. Exit-Code 1, wenn eine Metrik verfehlt wird.
+## Ohne --headless sieht man die Szenarien laufen. Exit-Code 1, wenn eine Metrik verfehlt wird,
+## 2 bei Zeitüberschreitung (--timeout=Sekunden Echtzeit, Standard 900).
+## Nicht `--quit-after` verwenden: Godot beendet dann mit Exit-Code 0, auch mitten im Lauf.
 
 const C := preload("res://src/vehicle/vehicle_constants.gd")
 const SCENARIOS := [
@@ -15,17 +17,20 @@ const SCENARIOS := [
 	"spalt_15cm",
 	"aufstellen",
 	"terrain3d_hang_quer",
+	"baukasten",
 ]
 const SPAWN_CLEARANCE := 0.85  # Karosserie-Ursprung über dem Boden beim Absetzen
 
 var results: Array[Dictionary] = []
 var _stage: Node3D
 var _camera: Camera3D
+var _deadline_ms := 0
 
 
 func _ready() -> void:
 	var args := _parse_args()
 	var only: PackedStringArray = args.get("only", "").split(",", false)
+	_deadline_ms = Time.get_ticks_msec() + int(float(args.get("timeout", "900")) * 1000.0)
 	await get_tree().process_frame
 
 	for scenario in SCENARIOS:
@@ -45,6 +50,14 @@ func _ready() -> void:
 		var file := FileAccess.open(args.json, FileAccess.WRITE)
 		file.store_string(JSON.stringify(results, "  "))
 	get_tree().quit(1 if failed > 0 else 0)
+
+
+func _process(_delta: float) -> void:
+	if _deadline_ms > 0 and Time.get_ticks_msec() > _deadline_ms:
+		push_error("Fahrbot: Zeitüberschreitung, Lauf abgebrochen")
+		print("\n", _markdown_table())
+		get_tree().quit(2)
+		_deadline_ms = 0
 
 
 # --- Szenarien ---------------------------------------------------------------
@@ -153,6 +166,109 @@ func _scenario_terrain3d_hang_quer() -> void:
 	_report("terrain3d_hang_quer", "Winkelgeschw. im Stand", m.max_angular, C.MAX_PARKED_ANGULAR_VELOCITY, "rad/s")
 
 
+## Pflicht für JEDE Teilekombination (ADR 0008): am 35°-Hang quer und bergauf parken ohne Drift
+## und Zittern, nach dem Umkippen in < 3 s wieder aufrecht. Die 30-cm-Stufe ist dagegen eine
+## Eigenschaft (kleine Räder schaffen sie nicht) und wird nur gezählt.
+func _scenario_baukasten() -> void:
+	var designs := _baukasten_designs()
+	var worst := {}  # Metrik -> [Wert, Design]
+	var failures: Array[String] = []
+	var climbers := 0
+	for entry in designs:
+		var label: String = entry[0]
+		var design: CrawlerDesign = entry[1]
+		var m := await _check_design(design)
+		climbers += int(m.climbs)
+		for key in ["drift_quer", "drift_bergauf", "angular", "righting"]:
+			if not worst.has(key) or m[key] > worst[key][0]:
+				worst[key] = [m[key], label]
+		if m.drift_quer > C.MAX_PARKED_DRIFT_M or m.drift_bergauf > C.MAX_PARKED_DRIFT_M \
+				or m.angular > C.MAX_PARKED_ANGULAR_VELOCITY or m.righting > C.MAX_SELF_RIGHT_TIME_S:
+			failures.append("%s (quer %.3f m, bergauf %.3f m, %.4f rad/s, aufstellen %.1f s)" % [
+				label, m.drift_quer, m.drift_bergauf, m.angular, m.righting])
+	print("  %d Baupläne geprüft, %d schaffen die 30-cm-Stufe" % [designs.size(), climbers])
+	for f in failures:
+		print("  ❌ ", f)
+	_report("baukasten", "Drift quer, schlechtester (%s)" % worst.drift_quer[1], worst.drift_quer[0], C.MAX_PARKED_DRIFT_M, "m")
+	_report("baukasten", "Drift bergauf, schlechtester (%s)" % worst.drift_bergauf[1], worst.drift_bergauf[0], C.MAX_PARKED_DRIFT_M, "m")
+	_report("baukasten", "Zittern, schlechtester (%s)" % worst.angular[1], worst.angular[0], C.MAX_PARKED_ANGULAR_VELOCITY, "rad/s")
+	_report("baukasten", "Aufstellen, schlechtester (%s)" % worst.righting[1], worst.righting[0], C.MAX_SELF_RIGHT_TIME_S, "s")
+	_report("baukasten", "Baupläne mit Fehler", failures.size(), 0, "")
+
+
+## Volle Matrix der fahrwerksrelevanten Teile im ungünstigsten Aufbau (schwer, hoher Schwerpunkt,
+## Portalachsen, glatte Reifen, alle Extras), dazu jedes übrige Teil einzeln am Standard-Crawler
+## und alle Vorlagen.
+func _baukasten_designs() -> Array:
+	var out := []
+	for chassis in PartCatalog.parts(&"fahrgestell"):
+		for wheels in PartCatalog.parts(&"raeder"):
+			for suspension in PartCatalog.parts(&"federung"):
+				var d := CrawlerDesign.new()
+				d.choices[&"fahrgestell"] = chassis.id
+				d.choices[&"raeder"] = wheels.id
+				d.choices[&"federung"] = suspension.id
+				d.choices[&"reifen"] = &"glatt"
+				d.choices[&"achsen"] = &"portal"
+				d.choices[&"aufbau"] = &"feuerwehr"
+				d.choices[&"extras"] = PartCatalog.parts(&"extras").map(func(p): return p.id)
+				out.append(["%s/%s/%s" % [chassis.id, wheels.id, suspension.id], d])
+	for category in [&"achsen", &"reifen", &"motor", &"lenkung", &"aufbau"]:
+		for p in PartCatalog.parts(category):
+			var d := CrawlerDesign.new()
+			d.choices[category] = p.id
+			out.append(["%s=%s" % [category, p.id], d])
+	for preset in PartCatalog.PRESETS:
+		out.append(["vorlage=%s" % preset.id, CrawlerDesign.from_preset(preset)])
+	return out
+
+
+func _check_design(design: CrawlerDesign) -> Dictionary:
+	var spec := VehicleSpec.from_design(design)
+	var clearance := -C.WHEEL_MOUNT_Y_M + spec.travel + spec.wheel_radius + 0.05
+	var ramp_basis := Basis(Vector3.RIGHT, deg_to_rad(C.TARGET_HILL_ANGLE_DEG))
+	var m := {"angular": 0.0}
+
+	for turn in [Basis(Vector3.UP, PI / 2), Basis()]:
+		_new_stage()
+		_box(Vector3(60, 1, 60), Vector3.ZERO, ramp_basis)
+		var v := _spawn(Transform3D(ramp_basis * turn, ramp_basis.y * (0.5 + clearance)), design)
+		await _run(3.0)
+		var parked := await _measure_parked(v, 5.0)
+		m["drift_quer" if turn != Basis() else "drift_bergauf"] = parked.drift
+		m.angular = maxf(m.angular, parked.max_angular)
+
+	_new_stage()
+	_flat_ground()
+	var top := spec.body_size.y * 0.5 + spec.cab_size.y
+	var flipped := _spawn(Transform3D(Basis(Vector3.BACK, PI), Vector3(0, top + 0.5, 0)), design)
+	var r := {"time": INF, "t": 0.0}
+	await _run(6.0, func():
+		r.t += 1.0 / C.PHYSICS_TICKS_PER_SECOND
+		var upright: bool = flipped.global_basis.y.dot(Vector3.UP) > 0.9
+		var calm: bool = flipped.angular_velocity.length() < 0.5 and not flipped.is_righting()
+		if r.time == INF and r.t > 0.5 and upright and calm:
+			r.time = r.t
+	)
+	m.righting = r.time
+
+	_new_stage()
+	_flat_ground()
+	_box(Vector3(20, C.TARGET_STEP_HEIGHT_M, 20), Vector3(0, C.TARGET_STEP_HEIGHT_M / 2, -15))
+	var climber := _spawn(Transform3D(Basis(), Vector3(0, clearance, 0)), design)
+	climber.input = BotInputSource.new([{"duration": 8.0, "throttle": 1.0}])
+	await _run(8.0)
+	m.climbs = climber.global_position.z < -8.0 and climber.global_position.y > C.TARGET_STEP_HEIGHT_M
+	return m
+
+
+func _new_stage() -> void:
+	if _stage:
+		_stage.queue_free()
+	_stage = Node3D.new()
+	add_child(_stage)
+
+
 # --- Bausteine ---------------------------------------------------------------
 
 
@@ -183,8 +299,10 @@ func _run(seconds: float, each_tick: Callable = Callable()) -> void:
 			each_tick.call()
 
 
-func _spawn(xform: Transform3D) -> KraxlVehicle:
+func _spawn(xform: Transform3D, design: CrawlerDesign = null) -> KraxlVehicle:
 	var vehicle := KraxlVehicle.new()
+	if design:
+		vehicle.design = design
 	vehicle.transform = xform
 	_stage.add_child(vehicle)
 	_camera = Camera3D.new()

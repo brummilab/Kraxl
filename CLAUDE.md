@@ -15,7 +15,10 @@ Regeländerungen nur durch den Team-Lead auf `main`.
 ## Technik-Regeln
 
 - Godot 4.7.2-stable (bzw. Rückfall 4.6.3 laut ADR 0001). Physik-Engine explizit „Jolt Physics“.
-- Physik-Konstanten nur in `src/vehicle/vehicle_constants.gd` (per `preload` als `C` einbinden). Tick-Rate 120, Interpolation an.
+- Physik-Werte nur in `src/vehicle/vehicle_constants.gd` (per `preload` als `C` einbinden) und im Teilekatalog
+  `src/vehicle/parts/part_catalog.gd`. Tick-Rate 120, Interpolation an.
+- Jedes neue Teil muss die Baukasten-Matrix des Fahrbots bestehen (kein Bauplan darf am Hang rutschen oder liegen bleiben).
+- Keine Marken- oder Modellnamen echter Hersteller im Spiel (Vorbilder nur in `docs/referenzen.md`).
 - Terrain3D nur über `tools/fetch_terrain3d.(sh|ps1)` (gepinnte Version + SHA-256), `addons/terrain_3d/` nie committen.
 - Kein `VehicleBody3D`. Rad-Kontakt per `ShapeCast3D` mit `force_shapecast_update()` im `_physics_process`.
 - Reifenmodell: keine Division durch |v| nahe 0; unter `PARK_SPEED_THRESHOLD` ohne Gas greift die Parkbremse.
@@ -27,7 +30,8 @@ Regeländerungen nur durch den Team-Lead auf `main`.
 ## Prozess-Regeln
 
 - Gate muss grün sein vor jedem Merge: Fahrbot (`godot --headless --fixed-fps 120 res://tests/fahrbot/fahrbot.tscn`)
-  ohne verfehlte Metrik. Android-Export darf keine `uses-permission` enthalten.
+  ohne verfehlte Metrik und UI-Test (`godot --headless res://tests/ui/ui_test.tscn`) ohne Fehler.
+  Nie `--quit-after` verwenden (Exit-Code 0 auch bei Abbruch). Android-Export darf keine `uses-permission` enthalten.
 - Physik-Änderungen liefern eine Vorher/Nachher-Tabelle der Fahrbot-Metriken.
 - Änderungen an Fahrphysik, Kamera oder Steuerung brauchen die Freigabe nach `docs/feel-check.md`.
 - Keystores nie committen.
