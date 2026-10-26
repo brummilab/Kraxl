@@ -16,8 +16,9 @@
   - Jede Berührung gibt Ton und Hüpfer (M5).
   - Alle Teile einer Kategorie passen in eine Reihe, Wischen ist nicht nötig.
 - **Teile als Daten** in `src/vehicle/parts/part_catalog.gd`:
-  - 10 Kategorien und 6 Vorlagen, insgesamt 46 Teile.
-  - Fahrgestell 5, Räder 4, Achsen 2, Reifen 4, Federung 4, Motor 3, Lenkung 3, Aufbau 7, Farbe 8, Extras 6
+  - 10 Kategorien und 8 Vorlagen, insgesamt 48 Teile.
+  - Fahrgestell 5, Räder 4, Achsen 2, Reifen 4, Federung 4, Motor 3, Lenkung 3, Aufbau 9 (inkl. Bagger und
+    Radlader, ADR 0011), Farbe 8, Extras 6
     (mehrfach wählbar).
   - Physik-Werte stehen nur hier und in `vehicle_constants.gd`.
 - **Bauplan → Fahrwerte:** `CrawlerDesign` (gewählte Teile) → `VehicleSpec` (berechnete Werte) → `KraxlVehicle`.
@@ -28,7 +29,7 @@
 ## „Kein Scheitern“ für jede Kombination
 
 Ein Kind darf keinen Crawler bauen können, der am Hang wegrutscht oder liegen bleibt. Deshalb prüft der
-Fahrbot (Szenario `baukasten`) **105 Baupläne**:
+Fahrbot (Szenario `baukasten`) **109 Baupläne**:
 - die volle Matrix aus Fahrgestell × Räder × Federung im ungünstigsten Aufbau (schwer, hoch, Portalachsen,
   glatte Reifen, alle Extras),
 - jedes übrige Teil einzeln,
@@ -38,7 +39,7 @@ Pflicht für jeden Bauplan:
 - parken am 35°-Hang quer und bergauf (Drift ≤ 2 cm, Zittern ≤ 0,01 rad/s),
 - nach dem Umkippen in < 3 s wieder aufrecht.
 
-Die 30-cm-Stufe ist eine Eigenschaft und kein Pflichtwert; aktuell schaffen sie alle 105 Baupläne.
+Die 30-cm-Stufe ist eine Eigenschaft und kein Pflichtwert; aktuell schaffen sie alle 109 Baupläne.
 
 Was die Matrix aufgedeckt hat und wie es gelöst ist:
 

@@ -278,6 +278,27 @@ static func _body_silhouette(ci: CanvasItem, id: StringName, c: Vector2, u: floa
 			ci.draw_line(Vector2(c.x + 4 * u, base_y - 22 * u), Vector2(c.x + 38 * u, base_y - 50 * u), Color(0.95, 0.75, 0.1), 6 * u)
 			ci.draw_line(Vector2(c.x + 38 * u, base_y - 50 * u), Vector2(c.x + 38 * u, base_y - 30 * u), INK, 2 * u)
 			ci.draw_arc(Vector2(c.x + 34 * u, base_y - 28 * u), 5 * u, -0.3, PI, 10, INK, 3 * u)
+		&"bagger":
+			# Ketten-Unterwagen, Oberwagen mit Kabine, geknickter Arm mit Löffel
+			ci.draw_rect(Rect2(c.x - 34 * u, base_y - 6 * u, 60 * u, 14 * u), TIRE)
+			ci.draw_rect(Rect2(c.x - 30 * u, base_y - 26 * u, 46 * u, 20 * u), accent)
+			ci.draw_rect(Rect2(c.x - 26 * u, base_y - 44 * u, 18 * u, 18 * u), accent)
+			ci.draw_rect(Rect2(c.x - 23 * u, base_y - 41 * u, 12 * u, 9 * u), Color(0.6, 0.8, 0.95))
+			ci.draw_line(Vector2(c.x + 10 * u, base_y - 24 * u), Vector2(c.x + 34 * u, base_y - 50 * u), accent.darkened(0.15), 7 * u)
+			ci.draw_line(Vector2(c.x + 34 * u, base_y - 50 * u), Vector2(c.x + 44 * u, base_y - 18 * u), accent.darkened(0.15), 6 * u)
+			ci.draw_colored_polygon(PackedVector2Array([
+				Vector2(c.x + 38 * u, base_y - 20 * u), Vector2(c.x + 50 * u, base_y - 16 * u), Vector2(c.x + 44 * u, base_y - 4 * u),
+			]), METAL)
+			return
+		&"radlader":
+			ci.draw_rect(Rect2(c.x - 30 * u, base_y - 22 * u, 52 * u, 16 * u), accent)
+			ci.draw_rect(Rect2(c.x - 26 * u, base_y - 46 * u, 22 * u, 24 * u), accent)
+			ci.draw_rect(Rect2(c.x - 22 * u, base_y - 42 * u, 14 * u, 12 * u), Color(0.6, 0.8, 0.95))
+			ci.draw_line(Vector2(c.x + 4 * u, base_y - 26 * u), Vector2(c.x + 34 * u, base_y - 18 * u), INK, 4 * u)
+			ci.draw_colored_polygon(PackedVector2Array([
+				Vector2(c.x + 30 * u, base_y - 28 * u), Vector2(c.x + 48 * u, base_y - 26 * u),
+				Vector2(c.x + 48 * u, base_y + 4 * u), Vector2(c.x + 34 * u, base_y + 4 * u),
+			]), METAL)
 		&"feuerwehr":
 			ci.draw_rect(Rect2(c.x - 44 * u, base_y - 40 * u, 88 * u, 32 * u), accent)
 			ci.draw_rect(Rect2(c.x - 40 * u, base_y - 34 * u, 14 * u, 12 * u), Color(0.6, 0.8, 0.95))

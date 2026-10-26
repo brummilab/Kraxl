@@ -26,6 +26,8 @@ var occupied := true:
 
 ## Geräusche (Motor, Ketten, Plumps, Aufstehen); im Fahrbot aus, weil dort niemand zuhört.
 var sounds := true
+## Auspuffrauch; im Fahrbot aus, weil dort niemand hinschaut.
+var smoke := true
 
 var wheels: Array[VehicleWheel] = []
 var parked := false
@@ -36,6 +38,12 @@ var _has_park_anchor := false
 var _tipped_time := 0.0
 var _righting := false
 var _inv_inertia_world := Basis()
+## Lichter (nur mit Extra „licht“) – per Licht-Taste umschaltbar.
+var lights_on := true
+## Was CrawlerVisuals zum Schalten und Bewegen liefert (Lichter, Lampen, Werkzeug-Gelenke).
+var _parts := {}
+var _light_was_pressed := false
+var _tool_amount := 0.0
 var _air_time := 0.0
 var _fall_speed := 0.0
 
@@ -58,7 +66,13 @@ func _build_body() -> void:
 	var top := spec.body_size.y * 0.5
 	_add_box_collision(spec.body_size, Vector3.ZERO)
 	_add_box_collision(spec.cab_size, Vector3(0, top + spec.cab_size.y * 0.5, spec.cab_z))
-	CrawlerVisuals.build(self, spec, design)
+	_parts = CrawlerVisuals.build(self, spec, design)
+	set_lights(lights_on)
+	if smoke:
+		for i in _parts.exhausts.size():
+			var puff := ExhaustSmoke.new(self, _parts.exhausts[i])
+			puff.name = "Auspuffrauch%d" % (i + 1)
+			add_child(puff)
 
 
 func _add_box_collision(size: Vector3, pos: Vector3) -> void:
@@ -80,6 +94,7 @@ func _build_wheels() -> void:
 		wheel.travel = spec.travel
 		wheel.hub_color = spec.color
 		wheel.tracks = spec.tracks
+		wheel.tire = design.choices[&"reifen"]
 		add_child(wheel)
 		wheel.add_exception(self)
 		wheels.append(wheel)
@@ -106,6 +121,9 @@ func _physics_process(delta: float) -> void:
 		apply_force(global_basis.y * spring, wheel.contact_point - global_position)
 
 	_track_landing(grounded_count, delta)
+	if input.light and not _light_was_pressed and has_lights():
+		set_lights(not lights_on)
+	_light_was_pressed = input.light
 
 	var throttle := input.throttle
 	var wants_to_drive := absf(throttle) > C.THROTTLE_DEADZONE
@@ -204,6 +222,40 @@ func _apply_tire_force(
 	if force.length() > max_force:
 		force = force.normalized() * max_force
 	apply_force(force, offset)
+
+
+func has_lights() -> bool:
+	return not _parts.get("lights", []).is_empty()
+
+
+func has_tool() -> bool:
+	return not _parts.get("tool", {}).is_empty()
+
+
+func set_lights(on: bool) -> void:
+	lights_on = on
+	for light: SpotLight3D in _parts.get("lights", []):
+		light.visible = on
+	for lamp: StandardMaterial3D in _parts.get("lamps", []):
+		lamp.emission_enabled = on
+		lamp.albedo_color = CrawlerVisuals.LAMP if on else CrawlerVisuals.LAMP.darkened(0.6)
+
+
+## Bagger-Arm bzw. Radlader-Schaufel folgen der Werkzeug-Taste weich (nur Optik).
+func _process(delta: float) -> void:
+	if not has_tool():
+		return
+	_tool_amount = move_toward(_tool_amount, clampf(input.tool, 0.0, 1.0), delta * C.TOOL_SPEED)
+	var a := _tool_amount
+	var tool: Dictionary = _parts.tool
+	match tool.kind:
+		&"bagger":
+			tool.boom.rotation.x = lerpf(0.55, -0.25, a)
+			tool.stick.rotation.x = lerpf(-1.1, -0.35, a)
+			tool.bucket.rotation.x = lerpf(-0.9, 0.5, a)
+		&"radlader":
+			var rest: Transform3D = tool.rest
+			tool.shovel.transform = rest.rotated_local(Vector3.RIGHT, lerpf(0.0, -0.75, a))
 
 
 func _track_landing(grounded_count: int, delta: float) -> void:

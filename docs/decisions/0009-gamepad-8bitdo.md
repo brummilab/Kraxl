@@ -24,7 +24,9 @@ Belegung in `src/input/kraxl_input.gd`, ausgelesen über `ActionInputSource` (ei
 | Vorwärts | A **und** B (beide rechten Knöpfe), R, R2 | ↑ / W |
 | Rückwärts | X **und** Y (beide linken Knöpfe), L, L2 | ↓ / S |
 | Lenken | Steuerkreuz, linker Stick (Totzone 0,3) | ← → / A D |
-| Hupe | Stick drücken (L3 oder R3) | H / Leertaste |
+| Hupe | linken Stick drücken (L3) | H / Leertaste |
+| Licht an/aus (im Gelände) | Start | L |
+| Werkzeug senken (Bagger, Radlader) | rechten Stick nach unten oder drücken (R3) | E |
 | Garage | Select | G / Esc |
 | Garage: Karte wechseln | Steuerkreuz, linker Stick | Pfeiltasten |
 | Garage: auswählen | A **und** B | Enter / Leertaste |
@@ -38,6 +40,8 @@ Belegung in `src/input/kraxl_input.gd`, ausgelesen über `ActionInputSource` (ei
   sie als Eingabegerät einbindet.
 - Knöpfe in der Spielszene haben `focus_mode = NONE`, damit der Gas-Knopf nicht versehentlich
   „Fahrbot 5 min“ auslöst.
+
+- Seit ADR 0011 liegt die Hupe nur noch auf L3; R3 und der rechte Stick bedienen das Werkzeug.
 
 ## 8BitDo USB Wireless Adapter 2
 

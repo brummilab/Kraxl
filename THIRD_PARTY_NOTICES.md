@@ -68,3 +68,9 @@ SOFTWARE.
 - Nur Entwicklungsabhängigkeit, nicht im Build enthalten.
 - Version: _passend zu Godot 4.7 pinnen_
 - Lizenz: MIT – https://github.com/bitwes/Gut
+
+## Kenney Car Kit
+
+- Karosserien und Räder in `assets/models/kenney/` (im Build enthalten).
+- Lizenz: CC0 1.0 (Public Domain) – https://kenney.nl/assets/car-kit
+- Credit freiwillig: Kenney (www.kenney.nl). Lizenztext: `assets/models/kenney/License.txt`.

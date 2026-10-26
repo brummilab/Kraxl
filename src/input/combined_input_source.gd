@@ -13,10 +13,14 @@ func update(delta: float) -> void:
 	throttle = 0.0
 	steer = 0.0
 	horn = false
+	light = false
+	tool = 0.0
 	for source in sources:
 		source.update(delta)
 		throttle += source.throttle
 		steer += source.steer
 		horn = horn or source.horn
+		light = light or source.light
+		tool = maxf(tool, source.tool)
 	throttle = clampf(throttle, -1.0, 1.0)
 	steer = clampf(steer, -1.0, 1.0)

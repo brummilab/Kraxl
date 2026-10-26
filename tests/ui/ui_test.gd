@@ -25,6 +25,7 @@ func _ready() -> void:
 	_test_design()
 	await _test_garage()
 	await _test_sounds()
+	await _test_models_and_tools()
 
 	for e in _logger.errors:
 		_failures.append("Skriptfehler: " + e)
@@ -256,6 +257,8 @@ func _test_sounds() -> void:
 	touch._input(release)
 	_check(not touch.source.horn, "Touch-Hupe loslassen")
 	# Headless ist das Fenster winzig; geprüft wird mit echten Größen (PC-Fenster, kleines Handy quer).
+	touch.show_light = true
+	touch.show_tool = true
 	for screen in [Vector2(1280, 720), Vector2(800, 360)]:
 		touch.size = screen
 		touch._layout()
@@ -271,6 +274,128 @@ func _test_sounds() -> void:
 func _physics_frames(n: int) -> void:
 	for i in n:
 		await get_tree().physics_frame
+
+
+# --- Modelle, Licht, Werkzeug, Touch-Sichtbarkeit -------------------------------
+
+
+func _test_models_and_tools() -> void:
+	for body in KenneyModels.BODIES:
+		var root := KenneyModels.instantiate(KenneyModels.BODIES[body])
+		var mesh_node: MeshInstance3D = root.get_node("body")
+		_check(KenneyModels.dominant_tile(mesh_node.mesh).x >= 0, "Kenney-Karosserie %s hat eine Lack-Kachel" % body)
+		root.free()
+	for tire in KenneyModels.WHEELS:
+		var info := KenneyModels.wheel_mesh(tire)
+		_check(info.mesh != null and info.radius > 0.1, "Kenney-Rad für %s" % tire)
+
+	var stage := Node3D.new()
+	add_child(stage)
+	var floor_body := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	shape.shape = BoxShape3D.new()
+	shape.shape.size = Vector3(60, 1, 60)
+	shape.position.y = -0.5
+	floor_body.add_child(shape)
+	stage.add_child(floor_body)
+
+	for preset in PartCatalog.PRESETS:
+		var v := KraxlVehicle.new()
+		v.design = CrawlerDesign.from_preset(preset)
+		v.position = Vector3(0, 2, 0)
+		stage.add_child(v)
+		var kenney := KenneyModels.has_body(v.design.choices[&"aufbau"])
+		_check(v.has_node("KenneyBody") == kenney, "Vorlage %s: Kenney-Karosserie %s" % [preset.id, "ja" if kenney else "nein"])
+		v.queue_free()
+	await get_tree().physics_frame
+
+	# Licht schalten: nur Fahrzeuge mit Extra „licht“, Tastendruck schaltet einmal um.
+	var lit := CrawlerDesign.new()
+	lit.choices[&"extras"] = [&"licht"]
+	var car := KraxlVehicle.new()
+	car.design = lit
+	car.position = Vector3(0, 1.2, 0)
+	stage.add_child(car)
+	_check(car.has_lights() and car.lights_on, "Licht ist am Anfang an")
+	car.input = InputSource.new()
+	car.input.light = true
+	await _physics_frames(3)
+	_check(not car.lights_on, "Licht-Taste schaltet aus (einmal pro Druck)")
+	var lamp: SpotLight3D = car._parts.lights[0]
+	_check(not lamp.visible, "Scheinwerfer sind aus")
+	car.input.light = false
+	await _physics_frames(2)
+	car.input.light = true
+	await _physics_frames(2)
+	_check(car.lights_on and lamp.visible, "Zweiter Druck schaltet wieder an")
+	var plain := KraxlVehicle.new()
+	stage.add_child(plain)
+	_check(not plain.has_lights(), "Ohne Extra „licht“ gibt es nichts zu schalten")
+
+	# Auspuffrauch: jedes Fahrzeug pafft, mit Extra „auspuff“ aus beiden Rohren; Gas = mehr Rauch.
+	var plain_smoke := plain.find_children("Auspuffrauch*", "GPUParticles3D", true, false)
+	_check(plain_smoke.size() == 1, "Ohne Extra: ein Endrohr raucht")
+	var stacks := CrawlerDesign.new()
+	stacks.choices[&"extras"] = [&"auspuff"]
+	var smoker := KraxlVehicle.new()
+	smoker.design = stacks
+	smoker.position = Vector3(-6, 1.2, 0)
+	stage.add_child(smoker)
+	var puffs := smoker.find_children("Auspuffrauch*", "GPUParticles3D", true, false)
+	_check(puffs.size() == 2, "Extra „auspuff“: zwei Rohre rauchen")
+	var idle: float = puffs[0].amount_ratio
+	smoker.input = InputSource.new()
+	smoker.input.throttle = 1.0
+	for i in 60:
+		await get_tree().process_frame
+	_check(puffs[0].amount_ratio > idle + 0.3, "Gas geben macht mehr Rauch")
+	smoker.queue_free()
+
+	# Werkzeug: Bagger-Arm und Radlader-Schaufel bewegen sich mit der Werkzeug-Taste.
+	for body in [&"bagger", &"radlader"]:
+		var d := CrawlerDesign.new()
+		d.choices[&"aufbau"] = body
+		var v := KraxlVehicle.new()
+		v.design = d
+		v.position = Vector3(6, 1.5, 0)
+		stage.add_child(v)
+		_check(v.has_tool(), "%s hat ein Werkzeug" % body)
+		var node: Node3D = v._parts.tool.get("boom", v._parts.tool.get("shovel"))
+		var before := node.transform
+		v.input = InputSource.new()
+		v.input.tool = 1.0
+		for i in 90:
+			await get_tree().process_frame
+		_check(not node.transform.is_equal_approx(before), "%s: Werkzeug bewegt sich" % body)
+		v.queue_free()
+
+	# Touch-Tasten: Tastatur blendet aus, Berührung blendet ein.
+	var touch := TouchControls.new()
+	var layer := CanvasLayer.new()
+	add_child(layer)
+	layer.add_child(touch)
+	await get_tree().process_frame
+	touch.shown = true
+	var key := InputEventKey.new()
+	key.keycode = KEY_W
+	key.pressed = true
+	touch._input(key)
+	_check(not touch.shown, "Tastatur blendet Touch-Tasten aus")
+	var tap := InputEventScreenTouch.new()
+	tap.pressed = true
+	tap.position = Vector2(5, 5)
+	touch._input(tap)
+	_check(touch.shown, "Berührung blendet Touch-Tasten wieder ein")
+	var lift := InputEventScreenTouch.new()
+	lift.position = tap.position
+	touch._input(lift)  # Finger weg – sonst bleibt die getroffene Taste gehalten
+	var pad := InputEventJoypadButton.new()
+	pad.button_index = JOY_BUTTON_A
+	pad.pressed = true
+	touch._input(pad)
+	_check(not touch.shown, "Gamepad blendet Touch-Tasten aus")
+	layer.queue_free()
+	stage.queue_free()
 
 
 # --- Garage --------------------------------------------------------------------

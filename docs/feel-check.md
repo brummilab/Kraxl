@@ -23,6 +23,11 @@ auf dem Android-Zielgerät (ADR 0004) im Modus „Kleine Hände“.
 | 14 | 8BitDo SN30 Pro: Garage komplett mit Steuerkreuz + rechten Knöpfen bedienbar, Start = losfahren | ☐ | |
 | 15 | Über den 8BitDo USB Wireless Adapter 2 (PC und Handy per OTG) funktioniert alles wie direkt | ☐ | |
 | 16 | Töne: Motor angenehm (nicht nervig), Hupe macht Spaß, Plumps/Dreiklang passend, nichts zu laut | ☐ | |
+| 17 | Modelle: Fahrzeuge sehen „echt“ aus, Lackfarbe aus der Garage stimmt, Räder drehen sichtbar | ☐ | |
+| 18 | Bagger und Radlader: Werkzeug-Taste senkt Arm/Schaufel, beim Loslassen geht es wieder hoch | ☐ | |
+| 19 | Licht-Taste (Start / L / Lampen-Taste) schaltet zuverlässig einmal pro Druck | ☐ | |
+| 20 | Auspuffrauch: sichtbar, mehr bei Gas, nicht störend | ☐ | |
+| 21 | PC: keine großen Pfeil-Tasten mit Tastatur/Gamepad; auf dem Tablet sind sie da | ☐ | |
 
 **Gesamturteil:** ☐ Fühlt sich gut an – Merge freigegeben  ☐ Nachbessern
 

@@ -68,6 +68,9 @@ const PARTS := {
 		{"id": &"kipper", "masse": 40.0, "kabine": Vector3(1.3, 0.7, 0.8), "kabine_z": -0.7, "schwerpunkt": 0.05},
 		{"id": &"feuerwehr", "masse": 50.0, "kabine": Vector3(1.3, 0.8, 1.8), "kabine_z": 0.1, "schwerpunkt": 0.08},
 		{"id": &"abschlepper", "masse": 45.0, "kabine": Vector3(1.3, 0.7, 0.8), "kabine_z": -0.7, "schwerpunkt": 0.06},
+		# Mit Werkzeug-Taste: Bagger-Arm bzw. Schaufel heben und senken (nur Optik).
+		{"id": &"bagger", "masse": 70.0, "kabine": Vector3(1.25, 0.9, 1.3), "kabine_z": 0.3, "schwerpunkt": 0.1},
+		{"id": &"radlader", "masse": 55.0, "kabine": Vector3(1.1, 0.9, 0.9), "kabine_z": 0.3, "schwerpunkt": 0.07},
 	],
 	&"farbe": [
 		{"id": &"orange", "farbe": Color(0.95, 0.55, 0.1)},
@@ -105,6 +108,10 @@ const PRESETS := [
 		"farbe": &"gelb", "extras": [&"fahne"]},
 	{"id": &"abschlepper", "fahrgestell": &"lang", "raeder": &"gross", "aufbau": &"abschlepper", "motor": &"stark",
 		"farbe": &"rot", "extras": [&"licht", &"seilwinde"]},
+	{"id": &"bagger", "fahrgestell": &"mittel", "reifen": &"ketten", "aufbau": &"bagger", "motor": &"gemuetlich",
+		"farbe": &"gelb", "extras": [&"licht"]},
+	{"id": &"radlader", "fahrgestell": &"mittel", "raeder": &"gross", "reifen": &"matsch", "aufbau": &"radlader",
+		"lenkung": &"allrad", "farbe": &"gelb", "extras": [&"licht"]},
 ]
 
 

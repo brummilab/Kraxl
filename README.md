@@ -13,12 +13,14 @@ Kein Scheitern, keine Werbung, keine Käufe, kein Internet, keine Datenerfassung
 ## Status
 
 Spike-Stand (Oktober 2026):
-- **Crawler-Baukasten (Garage):** 10 Kategorien mit 46 Teilen und 6 fertigen Vorlagen, alles per Antippen
-  oder Gamepad, ohne Text.
+- **Crawler-Baukasten (Garage):** 10 Kategorien mit 48 Teilen und 8 fertigen Vorlagen, alles per Antippen
+  oder Gamepad, ohne Text. Darunter **Bagger** und **Radlader** mit beweglichem Arm bzw. Schaufel.
+- **3D-Modelle** aus dem Kenney Car Kit (CC0), in der Garage-Farbe lackiert (ADR 0011).
+- Licht an/aus, Auspuffrauch (mehr bei Gas), große Touch-Tasten nur auf Touch-Geräten, Entwickler-Anzeige mit F3.
 - Fahrbares Gelände (Terrain3D) mit Touch-Steuerung, Gamepad (8BitDo SN30 Pro) und FPS-Messung.
 - Töne per Code: Motor je Motor-Teil, Ketten-Rattern, Hupe, Plumps, Dreiklang beim Aufstellen, Klicks (ADR 0010).
 - **Windows bestätigt:** läuft im Mobile-Renderer (RX 6600 XT, 59 fps), Controller über 8BitDo-Adapter erkannt.
-- Der Fahrbot prüft 105 Baupläne; alle Metriken sind grün (Godot 4.7.2 + Jolt + Terrain3D 1.0.2).
+- Der Fahrbot prüft 109 Baupläne; alle Metriken sind grün (Godot 4.7.2 + Jolt + Terrain3D 1.0.2).
 
 Offen ist der Hardware-Test am **Spike-Tag**: Windows und Android im Mobile-Renderer
 (Ablauf: [docs/spike/spike-tag.md](docs/spike/spike-tag.md)).
@@ -49,12 +51,14 @@ docs/
   feel-check.md                     Checkliste für die Probefahrt des Product Owners
   dependencies.md                   Abhängigkeiten inkl. Prüfung „sammelt Daten?“
 assets/                             eigene Assets (CC BY 4.0), Kinderzeichnungen, Herkunftsliste
+assets/models/kenney/               Kenney Car Kit (CC0): Karosserien und Räder
 scenes/garage/garage.tscn           Startszene: Crawler-Baukasten
 scenes/spike/terrain_spike.tscn     Gelände + Crawler + Touch/Gamepad + FPS-Runde
 src/
   garage/                           Garage, Karten, gezeichnete Symbole
   input/                            InputSource-Abstraktion: Touch, Tastatur/Gamepad, Fahrbot
-  vehicle/                          Rad-Controller, Bauplan → Fahrwerte, Optik
+  vehicle/                          Rad-Controller, Bauplan → Fahrwerte, Optik, Auspuffrauch
+  vehicle/kenney_models.gd          Kenney-Modelle ausrichten und lackieren
   vehicle/parts/part_catalog.gd     alle Teile und Vorlagen (mit vehicle_constants.gd einziger Ort für Physik-Werte)
   audio/                            Töne per Code (sfx.gd) und Fahrzeuggeräusche (vehicle_audio.gd)
   world/spike_terrain.gd            Terrain3D-Region per Code (35°-Hang, Wiese, Hügel)
@@ -93,7 +97,8 @@ sh scripts/install-hooks.sh   # Pre-commit-Hook für Kinderbeiträge aktivieren
 Dann das Projekt mit Godot 4.7.2-stable öffnen. **F5** startet die **Garage**:
 - Links Kategorien, unten Teile antippen, oben rechts Würfel (Zufall) und Zielflagge (losfahren).
 - Im Gelände: Pfeiltasten/WASD, Touch-Tasten oder Gamepad; Schraubenschlüssel bzw. Select führt zurück in die Garage.
-- Der Knopf „Fahrbot 5 min“ startet die FPS-Messrunde.
+- L schaltet das Licht, E senkt Bagger-Arm bzw. Schaufel, H hupt.
+- **F3** zeigt die Entwickler-Anzeige (FPS, Controller) und den Knopf „Fahrbot 5 min“ für die FPS-Messrunde.
 
 ## Gamepad (8BitDo SN30 Pro, auch über USB Wireless Adapter 2)
 
@@ -102,14 +107,16 @@ Dann das Projekt mit Godot 4.7.2-stable öffnen. **F5** startet die **Garage**:
 | Vorwärts | A oder B (rechte Knöpfe), R, R2 |
 | Rückwärts | X oder Y (linke Knöpfe), L, L2 |
 | Lenken | Steuerkreuz oder linker Stick |
-| Hupe | Stick drücken (L3/R3), Tastatur H oder Leertaste, Touch-Taste mit Trichter |
+| Hupe | linken Stick drücken (L3), Tastatur H oder Leertaste, Touch-Taste mit Trichter |
+| Licht an/aus | Start (im Gelände), Tastatur L, Touch-Taste mit Lampe |
+| Werkzeug (Bagger, Radlader) | rechten Stick nach unten oder R3, Tastatur E, Touch-Taste mit Schaufel |
 | Garage / Losfahren | Select / Start |
 
 A/B bzw. X/Y sind absichtlich doppelt belegt, weil der Controller je nach Modus vertauscht meldet
 (Details: [ADR 0009](docs/decisions/0009-gamepad-8bitdo.md)). Windows: Start + X (X-Input);
 Android: über Bluetooth koppeln (Start + B).
 Der **8BitDo USB Wireless Adapter 2** funktioniert am PC per USB und am Handy per OTG-Kabel, ohne
-App-Berechtigung. Die Statuszeile im Spiel zeigt jeden angeschlossenen Controller mit „bekannt/UNBEKANNT“.
+App-Berechtigung. Die Statuszeile im Spiel (F3) zeigt jeden angeschlossenen Controller mit „bekannt/UNBEKANNT“.
 Für unbekannte Geräte gibt es `data/gamecontrollerdb_extra.txt`.
 
 ## Fahrbot (Physik-Tests)
@@ -119,7 +126,7 @@ godot --headless --fixed-fps 120 res://tests/fahrbot/fahrbot.tscn -- [--only=han
 ```
 
 Gibt eine Messwert-Tabelle aus und endet mit Exit-Code 1, wenn eine Metrik verfehlt wird (2 bei Zeitüberschreitung).
-Die Baukasten-Matrix (105 Baupläne) dauert rund 2–3 Minuten; einzeln mit `--only=baukasten`.
+Die Baukasten-Matrix (109 Baupläne) dauert rund 2–3 Minuten; einzeln mit `--only=baukasten`.
 UI- und Gamepad-Test: `godot --headless res://tests/ui/ui_test.tscn`.
 Beides läuft in GitHub Actions bei jedem Push auf `main` und in Pull Requests. Im Editor: Szene öffnen und **F6** drücken.
 Nie `--quit-after` verwenden: Godot beendet damit mit Exit-Code 0, auch mitten im Lauf.
@@ -138,3 +145,4 @@ steht in `.gitignore`, und der Pre-commit-Hook blockiert solche Dateien. Details
 - Code: [MIT](LICENSE)
 - Eigene Assets: [CC BY 4.0](assets/LICENSE)
 - Fremdsoftware (Godot, Terrain3D, GUT): [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
+- Fremd-Assets (Kenney Car Kit, CC0): [assets/SOURCES.md](assets/SOURCES.md)

@@ -52,6 +52,9 @@ const UPRIGHT_LIFT_ACCEL := 9.0  # m/s², hebt das Fahrzeug während der Aufstel
 const LANDING_MIN_AIR_S := 0.25  # so lange ohne Bodenkontakt, bevor Aufsetzen „Plumps“ macht
 const LANDING_FULL_SPEED := 6.0  # m/s Fallgeschwindigkeit für volle Lautstärke
 
+# --- Werkzeug (Bagger, Radlader; nur Optik) ---
+const TOOL_SPEED := 1.5  # volle Bewegung pro Sekunde
+
 # --- Abnahme-Metriken des Fahrbots ---
 const TARGET_HILL_ANGLE_DEG := 35.0
 const MAX_PARKED_DRIFT_M := 0.02  # in 10 s am 35°-Hang

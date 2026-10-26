@@ -10,7 +10,7 @@ Marken- und Modellnamen kommen nie ins Spiel.
 |---|---|---|
 | [roge-rm/SnapRacers](https://github.com/roge-rm/SnapRacers) – Kart-Spiel mit Teile-Garage, Godot 4.7.2 + Jolt, für ein Kind gebaut | GPL-3.0 → **kein Code** | Ideen: Teile als Daten statt Code; Fertigfahrzeuge (→ unsere Vorlagen); direkt aus der Garage losfahren; Headless-Tests, die jedes Fahrzeug fahren (→ Baukasten-Matrix). Anders als dort: kein Drag & Drop, nur Antippen (ADR 0003) |
 | [Dechode/Godot-Advanced-Vehicle](https://github.com/Dechode/Godot-Advanced-Vehicle) – Raycast-Fahrzeug, Reifenmodelle | MIT | Bestätigt die Wahl: eigener Rigidbody-Controller statt VehicleBody3D und Physik-Takt ≥ 120 Hz |
-| [Kenney Car Kit](https://www.kenney.nl/assets/car-kit) (verlinkt von Dechode) | CC0 | Kandidat für Platzhalter-Modelle, bis eigene Blender-Modelle kommen (M7); vor Nutzung in `assets/SOURCES.md` eintragen |
+| [Kenney Car Kit](https://www.kenney.nl/assets/car-kit) (verlinkt von Dechode) | CC0 | **genutzt** für Karosserien und Räder (ADR 0011), eingetragen in `assets/SOURCES.md`; eigene Blender-Modelle bleiben Ziel (M7) |
 | [Saitodepaula/Godot-6DOF-Vehicle-Demo](https://github.com/Saitodepaula/Godot-6DOF-Vehicle-Demo) – Monstertruck mit Gelenken | – | Gegenbeispiel: Gelenk-Fahrwerke sind instabiler als unser Ansatz, nicht übernommen |
 | [libsdl-org/SDL #9916](https://github.com/libsdl-org/sdl/issues/9916), [#7524](https://github.com/libsdl-org/sdl/issues/7524) | – | 8BitDo-Controller melden je nach Modus A/B bzw. X/Y vertauscht → Knopf-Paare in ADR 0009 |
 

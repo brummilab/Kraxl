@@ -1,6 +1,8 @@
 extends Node3D
 ## Spike-Szene (ADR 0001/0004): Terrain3D + gebauter Crawler + Touch/Gamepad + FPS-Messung.
 ## Schraubenschlüssel oben links (oder Select am Gamepad) führt zurück in die Garage.
+## Statuszeile und „Fahrbot 5 min“ sind Entwickler-Werkzeuge: in Debug-Builds sichtbar,
+## in der Exe/APK für Kinder ausgeblendet; F3 blendet sie jederzeit ein und aus.
 ## Läuft auf Windows und Android. Knopf oben rechts startet die 5-min-Fahrbot-Runde;
 ## das Ergebnis steht danach auf dem Bildschirm und im Log (Remote-Debugger / adb logcat).
 ## Mit `-- --benchmark` startet die Runde sofort, `-- --benchmark-seconds=N` verkürzt sie,
@@ -46,6 +48,8 @@ func _ready() -> void:
 	add_child(vehicle)
 
 	_build_ui()
+	touch.show_light = vehicle.has_lights()
+	touch.show_tool = vehicle.has_tool()
 	_driver_input = CombinedInputSource.new([touch.source, ActionInputSource.new()])
 	vehicle.input = _driver_input
 	_camera.global_position = start + Vector3(0, CAMERA_HEIGHT, CAMERA_DISTANCE)
@@ -58,6 +62,17 @@ func _ready() -> void:
 			_save_screenshot_later(arg.get_slice("=", 1))
 	if args.has("--benchmark") or _benchmark_seconds != BENCHMARK_SECONDS:
 		_start_benchmark()
+	set_dev_tools(OS.is_debug_build() or args.has("--dev") or _bench_running)
+
+
+func set_dev_tools(visible_now: bool) -> void:
+	_hud.visible = visible_now
+	_bench_button.visible = visible_now
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F3:
+		set_dev_tools(not _hud.visible)
 
 
 ## Für Review-Bilder (M2): nach 4 s Fahrt Bild speichern und beenden.

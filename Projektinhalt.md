@@ -23,9 +23,10 @@ offene Welt (ca. 1×1 km) mit Hängen, Steinen, Matsch und Toren. Ohne Punkte, o
 | [0005](docs/decisions/0005-kinderbeitraege.md) | Kinderbeiträge: Zeichnungen ja, Stimmen nein | angenommen |
 | [0006](docs/decisions/0006-lizenzen.md) | MIT für Code, CC BY 4.0 für Assets | angenommen |
 | [0007](docs/decisions/0007-ci-und-tests.md) | CI-Ablauf, Secrets, Manifest-Gate, GUT | angenommen, Umsetzung offen |
-| [0008](docs/decisions/0008-crawler-baukasten.md) | Crawler-Baukasten (Garage), 46 Teile, 6 Vorlagen | angenommen, Feel-Check offen |
+| [0008](docs/decisions/0008-crawler-baukasten.md) | Crawler-Baukasten (Garage), 48 Teile, 8 Vorlagen | angenommen, Feel-Check offen |
 | [0009](docs/decisions/0009-gamepad-8bitdo.md) | Gamepad 8BitDo SN30 Pro, Knopf-Paare | Windows bestätigt, Android offen |
 | [0010](docs/decisions/0010-toene.md) | Töne per Code (Motor, Hupe, Plumps, Klick) | angenommen, Feel-Check offen |
+| [0011](docs/decisions/0011-modelle-werkzeug-licht-rauch.md) | Kenney-Modelle, Bagger/Radlader, Licht, Auspuffrauch, Touch-Tasten nur bei Touch | angenommen, Feel-Check offen |
 
 ## Fahrphysik-Ziele (Spike)
 
@@ -38,7 +39,7 @@ Messung vom 26.10.2026 (Details in ADR 0002/0008):
 | Winkelgeschwindigkeit im Stand < 0,01 rad/s | 0,0001 rad/s | ✅ |
 | Rad-Einsinken in 15-cm-Spalt | 16,9 mm (Plan: 0, geometrisch ≥ 7 mm) | ⚠️ PO-Entscheidung |
 | Aufstellen nach Umkippen < 3 s | 2,0 s | ✅ |
-| Alle 105 Baupläne: parken am 35°-Hang + aufstellen | schlechtester: 0,2 mm / 2,2 s | ✅ |
+| Alle 109 Baupläne: parken am 35°-Hang + aufstellen | schlechtester: 0,2 mm / 2,2 s | ✅ |
 | Android-Zielgerät: ≥ 30 fps über 5 min Fahrbot-Runde | – | offen (Spike-Tag) |
 
 ## Offene Aufgaben
@@ -117,3 +118,17 @@ Messung vom 26.10.2026 (Details in ADR 0002/0008):
     Aufsetzen, Dreiklang nach dem Aufstellen, Klick auf Touch-Tasten.
   - Alles läuft über einen Effekte-Bus mit Begrenzer.
   - Statuszeile bricht vor dem Fahrbot-Knopf um. UI-Test: 262 Checks.
+- **2026-10-26** – Wünsche nach dem PC-Test (ADR 0011):
+  - **Bessere Modelle:** Kenney Car Kit (CC0) für Karosserien und Räder, in der Garage-Farbe lackiert
+    (Shader auf der Palettenkachel). Buggy, Bagger und Ketten bleiben gezeichnet.
+  - **Bagger und Radlader:** neue Aufbauten und Vorlagen (48 Teile, 8 Vorlagen).
+    - Werkzeug-Taste: R3 bzw. rechter Stick nach unten, E, Touch-Schaufel.
+    - Das Werkzeug ist reine Optik ohne Kollision.
+  - **Licht schaltbar:** Start im Gelände, L, Touch-Lampe. Die Hupe liegt nur noch auf L3.
+  - **Auspuffrauch:** graue Wölkchen, mehr bei Gas; mit Extra „Auspuff“ aus zwei Rohren.
+  - **PC:** große Pfeil-Tasten nur auf Touch-Geräten; Tastatur oder Gamepad blendet sie aus. Die
+    Entwickler-Anzeige (FPS, Controller, Fahrbot-Knopf) ist in der Exe aus, F3 schaltet sie ein.
+  - Fahrbot: 109 Baupläne, 19 Metriken, 0 verfehlt.
+    - Die bisherigen Werte sind unverändert.
+    - Neu schlechtester quer: Vorlage Radlader, Drift 0,0 mm.
+  - UI-Test: 347 Checks. Spielszenen-Rauchtest grün.

@@ -12,6 +12,8 @@ var steer_factor := 0.0
 var hub_color := Color(0.95, 0.55, 0.1)
 ## Ketten-Laufwerk statt Rad: nur die Optik ändert sich, der Bodenkontakt bleibt die Kugel.
 var tracks := false
+## Reifen-Teil (für das Kenney-Rad); leer = einfache Zylinder.
+var tire: StringName = &""
 
 ## Ergebnis des letzten Ticks.
 var grounded := false
@@ -36,6 +38,8 @@ func _ready() -> void:
 	add_child(_visual)
 	if tracks:
 		_build_track_pod()
+	elif KenneyModels.has_wheel(tire):
+		_build_kenney_wheel()
 	else:
 		_visual.add_child(_disc(radius, width, Color(0.12, 0.12, 0.12)))
 		_visual.add_child(_disc(radius * 0.5, width + 0.02, hub_color))
@@ -68,6 +72,22 @@ func _exact_distance() -> float:
 		return get_closest_collision_safe_fraction() * travel
 	var height := (global_position - contact_point).dot(contact_normal)
 	return clampf((height - radius) / facing, 0.0, travel)
+
+
+## Kenney-Rad, auf unseren Radius und unsere Breite skaliert; Nabe in Lackfarbe.
+## Die Felge liegt beim Kenney-Rad auf +X; linke Räder werden um 180° gedreht (nicht gespiegelt –
+## negative Skalierung dreht die Flächen nach innen), damit die Felge immer nach außen zeigt.
+func _build_kenney_wheel() -> void:
+	var info := KenneyModels.wheel_mesh(tire)
+	var node := MeshInstance3D.new()
+	node.mesh = info.mesh
+	node.material_override = KenneyModels.paint_material(info.mesh, hub_color)
+	var flip := Basis(Vector3.UP, PI) if position.x < 0.0 else Basis()
+	var scale_r: float = radius / info.radius
+	var scale_w: float = width / maxf(info.width, 0.01)
+	# _visual dreht Zylinder (Achse Y) auf die Radachse X; das Kenney-Rad liegt schon auf X.
+	node.basis = Basis(Vector3.FORWARD, PI / 2).inverse() * flip * Basis.from_scale(Vector3(scale_w, scale_r, scale_r))
+	_visual.add_child(node)
 
 
 ## Dreieckiges Ketten-Laufwerk (wie Track-Pods an echten Crawlern), seitlich am Rad befestigt.
