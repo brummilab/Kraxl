@@ -28,8 +28,6 @@ static func setup() -> void:
 	if InputMap.has_action(FORWARD):
 		return
 	load_extra_mappings(EXTRA_MAPPINGS)
-	Input.joy_connection_changed.connect(func(device: int, connected: bool):
-		print("[Gamepad] %s: %s" % ["verbunden" if connected else "getrennt", describe_joypad(device)]))
 	_add(FORWARD, [KEY_UP, KEY_W], [JOY_BUTTON_A, JOY_BUTTON_B, JOY_BUTTON_RIGHT_SHOULDER], [[JOY_AXIS_TRIGGER_RIGHT, 1.0]])
 	_add(BACKWARD, [KEY_DOWN, KEY_S], [JOY_BUTTON_X, JOY_BUTTON_Y, JOY_BUTTON_LEFT_SHOULDER], [[JOY_AXIS_TRIGGER_LEFT, 1.0]])
 	_add(LEFT, [KEY_LEFT, KEY_A], [JOY_BUTTON_DPAD_LEFT], [[JOY_AXIS_LEFT_X, -1.0]])
@@ -63,6 +61,12 @@ static func load_extra_mappings(path: String) -> int:
 static func describe_joypad(device: int) -> String:
 	var known := "bekannt" if Input.is_joy_known(device) else "UNBEKANNT"
 	return "%s (%s, GUID %s)" % [Input.get_joy_name(device), known, Input.get_joy_guid(device)]
+
+
+## Für Input.joy_connection_changed. Szenen verbinden das über eine eigene Methode (nie per Lambda am
+## Input-Singleton: die überlebt das Skript und lässt Godot beim Beenden abstürzen).
+static func log_connection(device: int, connected: bool) -> void:
+	print("[Gamepad] %s: %s" % ["verbunden" if connected else "getrennt", describe_joypad(device)])
 
 
 static func describe_joypads() -> String:

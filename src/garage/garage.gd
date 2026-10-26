@@ -27,6 +27,7 @@ var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	KraxlInput.setup()
+	Input.joy_connection_changed.connect(_on_joy_connection_changed)
 	design = GameState.design().duplicate_design()
 	_build_world()
 	_build_ui()
@@ -44,6 +45,10 @@ func _process(delta: float) -> void:
 	var target := Vector3(0, 0.9, 0)
 	_camera.position = target + Vector3(sin(_orbit) * 7.5, 2.6, cos(_orbit) * 7.5)
 	_camera.look_at(target)
+
+
+func _on_joy_connection_changed(device: int, connected: bool) -> void:
+	KraxlInput.log_connection(device, connected)
 
 
 func _unhandled_input(event: InputEvent) -> void:

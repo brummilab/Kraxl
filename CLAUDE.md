@@ -26,6 +26,9 @@ Regeländerungen nur durch den Team-Lead auf `main`.
 - Steuerung: Auslösen bei Touch-Down, Multi-Touch tolerant, keine Doppeltipps/Pinch/Wischgesten für Kernfunktionen.
 - Eingaben laufen über eine `InputSource`-Abstraktion (Touch-UI und Fahrbot gleichermaßen).
 - Neue Abhängigkeiten nur mit Eintrag in `docs/dependencies.md`.
+- Signale von Engine-Singletons (`Input`, `OS` …) nur mit Methoden eines Nodes verbinden, nie mit Lambdas
+  oder statischen Funktionen – sonst stürzt Godot beim Beenden ab (Exit-Code 134).
+- Tests immer am Exit-Code beurteilen, nicht nur an der Ausgabe.
 
 ## Prozess-Regeln
 

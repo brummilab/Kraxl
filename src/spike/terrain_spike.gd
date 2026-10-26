@@ -37,6 +37,7 @@ func _ready() -> void:
 	_terrain = SpikeTerrain.create(self, _camera)
 
 	KraxlInput.setup()
+	Input.joy_connection_changed.connect(_on_joy_connection_changed)
 	vehicle = KraxlVehicle.new()
 	vehicle.design = GameState.design().duplicate_design()
 	var start := SpikeTerrain.CENTER
@@ -91,6 +92,10 @@ func _follow_camera(delta: float) -> void:
 	target.y = maxf(target.y, ground)
 	_camera.global_position = _camera.global_position.lerp(target, 1.0 - exp(-3.0 * delta))
 	_camera.look_at(vehicle.global_position + Vector3.UP)
+
+
+func _on_joy_connection_changed(device: int, connected: bool) -> void:
+	KraxlInput.log_connection(device, connected)
 
 
 func open_garage() -> void:
