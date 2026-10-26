@@ -10,6 +10,20 @@
 Offline-Sandkasten-Fahrspiel für Kinder ab 4 Jahren (Windows + Android), gebaut mit Godot.
 Kein Scheitern, keine Werbung, keine Käufe, kein Internet, keine Datenerfassung.
 
+## Screenshots
+
+| Garage: fertige Vorlagen | Garage: Farben inkl. Regenbogen-Lack |
+|---|---|
+| ![Garage mit Vorlagen](docs/screenshots/garage-vorlagen.png) | ![Garage mit Farben](docs/screenshots/garage-farben.png) |
+| **Gelände:** Kegel, Kisten, Blumen, Auspuffrauch | **Zwei Spieler** mit geteiltem Bildschirm |
+| ![Gelände](docs/screenshots/gelaende.png) | ![Zwei Spieler](docs/screenshots/zwei-spieler.png) |
+| **Bagger** gräbt Mulden und kippt Haufen aus | **Flieger** mit Regenbogen-Lack |
+| ![Bagger gräbt](docs/screenshots/bagger-graebt.png) | ![Flieger](docs/screenshots/flieger.png) |
+
+Die Bilder erzeugt `tests/screenshots/screenshots.tscn` reproduzierbar (Befehl im Kopf des Skripts).
+Sie stammen aus der Software-Grafik der Cloud (Compatibility-Renderer). Im Spiel (Mobile-Renderer) sehen
+Licht und Schatten etwas anders aus.
+
 ## Status
 
 Spike-Stand (Oktober 2026):

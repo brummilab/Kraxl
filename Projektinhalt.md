@@ -163,3 +163,8 @@ Messung vom 26.10.2026 (Details in ADR 0002/0008):
     - Hält Höhe und Tempo von selbst, höchstens 30 m über Grund.
   - Tests: Fahrbot 34 Metriken, 0 verfehlt (neu `terrain3d_graben`, `flieger`). UI-Test 400 Checks.
     Rauchtests mit Crawler und Flieger, ein und zwei Spieler, grün.
+
+- **2026-10-26** – Screenshots:
+  - 6 Bilder in `docs/screenshots/`: Garage-Vorlagen, Farben, Gelände, zwei Spieler, Bagger, Flieger.
+  - Eingebunden in der README.
+  - Erzeugt mit `tests/screenshots/screenshots.tscn`; reproduzierbar, nicht im Export.
