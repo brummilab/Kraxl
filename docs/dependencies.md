@@ -9,3 +9,4 @@ Keine SDKs oder Plugins mit Netzwerkzugriff.
 | Terrain3D | 1.0.2-stable (SHA-256 in `tools/fetch_terrain3d.sh`) | MIT | Terrain | nein | nein | 2026-10-25 |
 | GUT | _passend zu Godot 4.7 pinnen_ | MIT | Tests (nur Entwicklung) | nein | nein | – |
 | Godot-MCP-Server | _offen_ | – | Review (nur lokal, nicht im Build) | – | lokal | – |
+| Agent-Skills `godot-export`, `performance-optimization` aus awesome-gamedev-agent-skills | Commit `19d93f9` (in `.claude/skills/`) | Apache-2.0 | Anleitungen für KI-Agenten (nur Entwicklung, nicht im Build) | nein | nein (reiner Text, keine Skripte) | 2026-10-28 |

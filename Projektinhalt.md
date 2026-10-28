@@ -167,3 +167,10 @@ Messung vom 26.10.2026 (Details in ADR 0002/0008):
   - 6 Bilder in `docs/screenshots/`: Garage-Vorlagen, Farben, Gelände, zwei Spieler, Bagger, Flieger.
   - Eingebunden in der README.
   - Erzeugt mit `tests/screenshots/screenshots.tscn`; reproduzierbar, nicht im Export.
+- **2026-10-28** – Agent-Skills:
+  - Aus der Sammlung awesome-gamedev-agent-skills (Apache-2.0, Commit `19d93f9`) nach `.claude/skills/`
+    übernommen: `godot-export` (für den Android-Build) und `performance-optimization` (30-fps-Ziel).
+  - Beide vorher gelesen: keine Skripte, kein Netzwerk.
+  - Zwei Widersprüche zu CLAUDE.md (`--quit-after`, INTERNET-Berechtigung) überdeckt ein vorangestellter
+    „Kraxl-Vorrang“-Abschnitt.
+  - Eintrag in `docs/dependencies.md`, Lizenz und NOTICE in `.claude/skills/_lizenz/`.

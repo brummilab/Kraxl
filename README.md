@@ -95,6 +95,7 @@ icon.svg                            App-Symbol (Godot, Windows, Android)
 scripts/hooks/pre-commit            Schutz für Kinderbeiträge
 .github/workflows/fahrbot.yml       CI: Import + Fahrbot + UI-Test + Rauchtests, danach Windows-Exe und Release
 CLAUDE.md                           nicht verhandelbare Regeln für Agenten
+.claude/skills/                     Agent-Skills (Export, Performance), CLAUDE.md geht vor
 Projektinhalt.md                    laufende Projektübersicht
 ```
 
